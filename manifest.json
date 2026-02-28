@@ -1,0 +1,8 @@
+{
+"name":"Subham Savings Group",
+"short_name":"Subham",
+"display":"standalone",
+"start_url":"index.html",
+"background_color":"#f4f6f9",
+"theme_color":"#1a237e"
+}
