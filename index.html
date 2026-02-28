@@ -304,7 +304,9 @@ let filtered = transactions.filter(t => {
    if(selectedMember !== "all" && t.member !== selectedMember)
       return false;
 
-   let txDate = t.date.toDate();
+   let txDate = (t.date && typeof t.date.toDate === "function")
+  ? t.date.toDate()
+  : new Date(t.date);
 
    // Quick range filter (3 / 6 / 12 months)
    if(quick !== "all"){
@@ -329,7 +331,11 @@ filtered.forEach(t=>{
 
 table += `
 <tr>
-<td>${t.date.toDate().toLocaleDateString()}</td>
+<td>${
+  (t.date && typeof t.date.toDate === "function")
+    ? t.date.toDate().toLocaleDateString()
+    : new Date(t.date).toLocaleDateString()
+}</td>
 <td>${t.member}</td>
 <td>${t.type}</td>
 <td>${Number(t.amount).toLocaleString()} KRW</td>
@@ -391,7 +397,9 @@ if(t.member===name){
 if(t.type==="savings") savings+=t.amount;
 if(t.type==="loan_given"){ 
    loan+=t.amount; 
-   lastLoanDate=t.date.toDate();
+   lastLoanDate = (t.date && typeof t.date.toDate === "function")
+  ? t.date.toDate()
+  : new Date(t.date);
 }
 if(t.type==="loan_payment") loan-=t.amount;
 if(t.type==="interest_payment") interestPaid+=t.amount;
