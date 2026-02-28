@@ -214,20 +214,19 @@ document.querySelectorAll(".admin-only").forEach(e=>e.style.display="none");
 }
 
 /* ================= TRANSACTION ================= */
-
 function saveTransaction(){
 
 if(!admin){
-alert("Only Admin Allowed");
-return;
+  alert("Only Admin Allowed");
+  return;
 }
 
-let member=memberSelect.value;
-let type=document.getElementById("typeSelect").value;
-let amount=parseFloat(document.getElementById("amountInput").value);
-let date=document.getElementById("dateInput").value;
+let member = memberSelect.value;
+let type = document.getElementById("typeSelect").value;
+let amount = parseFloat(document.getElementById("amountInput").value);
+let date = document.getElementById("dateInput").value;
 
-if(!amount||!date) return alert("Enter all fields");
+if(!amount || !date) return alert("Enter all fields");
 
 if(editingId){
 
@@ -237,30 +236,25 @@ if(editingId){
     amount,
     date: firebase.firestore.Timestamp.fromDate(new Date(date))
   }).then(() => {
-
-    editingId = null;
-    document.getElementById("saveBtn").innerText = "Add";
-    document.getElementById("transactionForm").reset();
-
+      editingId = null;
+      document.getElementById("saveBtn").innerText = "Add";
+      document.getElementById("amountInput").value = "";
+      document.getElementById("dateInput").value = "";
   });
 
+} else {
+
+  db.collection("transactions").add({
+    member,
+    type,
+    amount,
+    date: firebase.firestore.Timestamp.fromDate(new Date(date))
+  });
+
+  document.getElementById("amountInput").value = "";
+  document.getElementById("dateInput").value = "";
 }
 
-editingId=null;
-document.getElementById("saveBtn").innerText="Add";
-
-}else{
-
-db.collection("transactions").add({
-member,
-type,
-amount,
-date: firebase.firestore.Timestamp.fromDate(new Date(date))
-});
-
-}
-
-document.getElementById("amountInput").value="";
 }
 /* ================= LOAD DATA ================= */
 
