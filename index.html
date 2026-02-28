@@ -85,7 +85,7 @@ select,input{margin:5px 0;padding:5px}
 </div>
 
 <!-- ADD TRANSACTION -->
-<div class="card">
+<div class="card admin-only" id="addTransactionCard">
 <h3>➕ Add Transaction</h3>
 
 <select id="memberSelect"></select>
@@ -99,7 +99,7 @@ select,input{margin:5px 0;padding:5px}
 
 <input type="number" id="amountInput" placeholder="Amount">
 <input type="date" id="dateInput">
-<button onclick="addTransaction()">Add</button>
+<button onclick="saveTransaction()" id="saveBtn">Add</button>
 </div>
 
 <!-- FILTER -->
@@ -173,6 +173,7 @@ const members=[
 
 let admin=false;
 let transactions=[];
+let editingId=null;
 
 const memberSelect=document.getElementById("memberSelect");
 const filterMember=document.getElementById("filterMember");
@@ -207,7 +208,13 @@ document.querySelectorAll(".admin-only").forEach(e=>e.style.display="none");
 
 /* ================= TRANSACTION ================= */
 
-function addTransaction(){
+function saveTransaction(){
+
+if(!admin){
+alert("Only Admin Allowed");
+return;
+}
+
 let member=memberSelect.value;
 let type=document.getElementById("typeSelect").value;
 let amount=parseFloat(document.getElementById("amountInput").value);
@@ -215,9 +222,25 @@ let date=document.getElementById("dateInput").value;
 
 if(!amount||!date) return alert("Enter all fields");
 
-db.collection("transactions").add({member,type,amount,date});
+if(editingId){
+
+db.collection("transactions").doc(editingId).update({
+member,type,amount,date
+});
+
+editingId=null;
+document.getElementById("saveBtn").innerText="Add";
+
+}else{
+
+db.collection("transactions").add({
+member,type,amount,date
+});
+
 }
 
+document.getElementById("amountInput").value="";
+}
 /* ================= LOAD DATA ================= */
 
 db.collection("transactions")
@@ -282,6 +305,7 @@ table+=`
 <td>${t.type}</td>
 <td>${t.amount.toFixed(0)} KRW</td>
 <td class="admin-only">
+<button onclick="editTx('${t.id}')">Edit</button>
 <button onclick="deleteTx('${t.id}')">Delete</button>
 </td>
 </tr>`;
@@ -301,6 +325,20 @@ renderMembers();
 function deleteTx(id){
 if(!admin) return;
 db.collection("transactions").doc(id).delete();
+}
+function editTx(id){
+
+if(!admin) return;
+
+let tx=transactions.find(t=>t.id===id);
+
+memberSelect.value=tx.member;
+document.getElementById("typeSelect").value=tx.type;
+document.getElementById("amountInput").value=tx.amount;
+document.getElementById("dateInput").value=tx.date;
+
+editingId=id;
+document.getElementById("saveBtn").innerText="Update";
 }
 
 /* ================= MEMBER CARDS ================= */
