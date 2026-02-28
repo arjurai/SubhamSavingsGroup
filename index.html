@@ -5,7 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Subham Savings Group</title>
 
+<style>
+body { font-family: Arial; background:#f2f4f8; padding:20px; }
+h1 { text-align:center; color:#002b5c; cursor:pointer; }
+.card { background:white; padding:15px; margin:10px 0; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+.blue { color:blue; }
+.red { color:red; }
+.green { color:green; }
+button { padding:8px 12px; margin-top:8px; border:none; border-radius:5px; background:#002b5c; color:white; cursor:pointer; }
+select, input { padding:6px; margin:5px 0; width:100%; }
+#adminPanel { display:none; }
+.small { font-size:13px; }
+</style>
+
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import jsPDF from "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm";
@@ -33,144 +47,184 @@ const MEMBERS = [
 let data = { members:{}, transactions:[], interestRate:1 };
 
 function initMembers(){
-MEMBERS.forEach(n=>{
-if(!data.members[n]){
-data.members[n]={ savings:0, loan:0, interestPaid:0 };
-}
-});
+  MEMBERS.forEach(n=>{
+    if(!data.members[n]){
+      data.members[n]={ savings:0, loan:0, interestPaid:0 };
+    }
+  });
 }
 
 function monthsBetween(start,end){
-const diff=(end-start)/(1000*60*60*24);
-if(diff<30) return 1;
-const full=Math.floor(diff/30);
-const extra=diff-(full*30);
-if(extra>=15) return full+1;
-return full;
+  const diff=(end-start)/(1000*60*60*24);
+  if(diff<30) return 1;
+  const full=Math.floor(diff/30);
+  const extra=diff-(full*30);
+  if(extra>=15) return full+1;
+  return full;
 }
 
 function calculateDue(name){
-const m=data.members[name];
-if(m.loan<=0) return 0;
-const lastLoan=[...data.transactions].reverse().find(t=>t.type==="loan"&&t.name===name);
-if(!lastLoan) return 0;
-const months=monthsBetween(new Date(lastLoan.date),new Date());
-return (m.loan*data.interestRate/100)*months - m.interestPaid;
+  const m=data.members[name];
+  if(m.loan<=0) return 0;
+  const lastLoan=[...data.transactions].reverse().find(t=>t.type==="loan"&&t.name===name);
+  if(!lastLoan) return 0;
+  const months=monthsBetween(new Date(lastLoan.date),new Date());
+  return (m.loan*data.interestRate/100)*months - m.interestPaid;
 }
 
 async function save(){ await setDoc(groupRef,data); }
 
 onSnapshot(groupRef,(snap)=>{
-if(snap.exists()){
-data=snap.data();
-render();
-}else{
-initMembers();
-save();
-}
+  if(snap.exists()){
+    data=snap.data();
+    render();
+  }else{
+    initMembers();
+    save();
+  }
 });
 
 function addTransaction(type,name,amount,date){
-data.transactions.push({type,name,amount,date});
-if(type==="savings") data.members[name].savings+=amount;
-if(type==="loan") data.members[name].loan+=amount;
-if(type==="payment") data.members[name].loan-=amount;
-if(type==="interest") data.members[name].interestPaid+=amount;
-save();
+  data.transactions.push({type,name,amount,date});
+  if(type==="savings") data.members[name].savings+=amount;
+  if(type==="loan") data.members[name].loan+=amount;
+  if(type==="payment") data.members[name].loan-=amount;
+  if(type==="interest") data.members[name].interestPaid+=amount;
+  save();
 }
 
 function deleteTransaction(index){
-const t=data.transactions[index];
-if(t.type==="savings") data.members[t.name].savings-=t.amount;
-if(t.type==="loan") data.members[t.name].loan-=t.amount;
-if(t.type==="payment") data.members[t.name].loan+=t.amount;
-if(t.type==="interest") data.members[t.name].interestPaid-=t.amount;
-data.transactions.splice(index,1);
-save();
+  const t=data.transactions[index];
+  if(t.type==="savings") data.members[t.name].savings-=t.amount;
+  if(t.type==="loan") data.members[t.name].loan-=t.amount;
+  if(t.type==="payment") data.members[t.name].loan+=t.amount;
+  if(t.type==="interest") data.members[t.name].interestPaid-=t.amount;
+  data.transactions.splice(index,1);
+  save();
 }
 
 function render(){
-let html="";
-MEMBERS.forEach(name=>{
-const m=data.members[name];
-const due=calculateDue(name);
-html+=`
-<div class="card">
-<h3>${name}</h3>
-<p>Savings: ₩${m.savings}</p>
-<p>Loan: ₩${m.loan}</p>
-<p>Due Interest: ₩${due.toFixed(0)}</p>
-</div>`;
-});
-document.getElementById("members").innerHTML=html;
+  let totalSavings=0, totalLoan=0, totalInterest=0;
 
-let txHTML="<h3>Transactions</h3>";
-data.transactions.forEach((t,i)=>{
-txHTML+=`
-<div class="card small">
-${t.date} | ${t.name} | ${t.type} | ₩${t.amount}
-<button onclick="deleteTransaction(${i})">Delete</button>
-</div>`;
-});
-document.getElementById("transactions").innerHTML=txHTML;
+  let html="";
+  MEMBERS.forEach(name=>{
+    const m=data.members[name];
+    const due=calculateDue(name);
+    totalSavings+=m.savings;
+    totalLoan+=m.loan;
+    totalInterest+=m.interestPaid;
+
+    html+=`
+    <div class="card">
+      <h3>${name}</h3>
+      <p class="blue">Savings: ₩${m.savings}</p>
+      <p class="red">Loan: ₩${m.loan}</p>
+      <p class="green">Due Interest: ₩${due.toFixed(0)}</p>
+    </div>`;
+  });
+
+  document.getElementById("members").innerHTML=html;
+
+  document.getElementById("totals").innerHTML=`
+  <div class="card">
+  <h3>Group Overview</h3>
+  <p><b>Total Group Money:</b> ₩${totalSavings-totalLoan+totalInterest}</p>
+  <p class="blue">Savings Collected: ₩${totalSavings}</p>
+  <p class="red">Money Invested: ₩${totalLoan}</p>
+  <p class="green">Interest Collected: ₩${totalInterest}</p>
+  </div>`;
+
+  let txHTML="<div class='card'><h3>Transactions</h3>";
+  data.transactions.forEach((t,i)=>{
+    txHTML+=`
+    <div class="small">
+    ${t.date} | ${t.name} | ${t.type} | ₩${t.amount}
+    <button onclick="deleteTransaction(${i})">Delete</button>
+    </div>`;
+  });
+  txHTML+="</div>";
+  document.getElementById("transactions").innerHTML=txHTML;
 }
 
-window.addSavings=()=>{addTransaction("savings",prompt("Name"),+prompt("Amount"),prompt("Date YYYY-MM-DD"))}
-window.addLoan=()=>{addTransaction("loan",prompt("Name"),+prompt("Amount"),prompt("Date YYYY-MM-DD"))}
-window.addPayment=()=>{addTransaction("payment",prompt("Name"),+prompt("Amount"),prompt("Date YYYY-MM-DD"))}
-window.addInterest=()=>{addTransaction("interest",prompt("Name"),+prompt("Amount"),prompt("Date YYYY-MM-DD"))}
 window.deleteTransaction=deleteTransaction;
 
-window.exportPDF=()=>{
-const docPDF=new jsPDF();
-docPDF.text("Subham Savings Group Report",20,20);
-let y=30;
-MEMBERS.forEach(name=>{
-const m=data.members[name];
-const due=calculateDue(name);
-docPDF.text(`${name} | Savings: ₩${m.savings} | Loan: ₩${m.loan} | Due: ₩${due.toFixed(0)}`,20,y);
-y+=10;
-});
-docPDF.save("Subham_Savings_Report.pdf");
+window.submitTransaction=function(){
+  const name=document.getElementById("memberSelect").value;
+  const type=document.getElementById("typeSelect").value;
+  const amount=parseFloat(document.getElementById("amountInput").value);
+  const date=document.getElementById("dateInput").value;
+  if(!amount || !date) return alert("Enter amount and date");
+  addTransaction(type,name,amount,date);
+  document.getElementById("amountInput").value="";
+}
+
+window.exportPDF=function(){
+  const docPDF=new jsPDF();
+  docPDF.text("Subham Savings Group Report",20,20);
+  let y=30;
+  MEMBERS.forEach(name=>{
+    const m=data.members[name];
+    const due=calculateDue(name);
+    docPDF.text(`${name} | Savings: ${m.savings} | Loan: ${m.loan} | Due: ${due.toFixed(0)}`,20,y);
+    y+=10;
+  });
+  docPDF.save("Subham_Savings_Report.pdf");
+}
+
+function populateMembers(){
+  const select=document.getElementById("memberSelect");
+  select.innerHTML="";
+  MEMBERS.forEach(name=>{
+    const opt=document.createElement("option");
+    opt.value=name;
+    opt.textContent=name;
+    select.appendChild(opt);
+  });
 }
 
 let taps=0;
 document.addEventListener("DOMContentLoaded",()=>{
-document.getElementById("title").onclick=()=>{
-taps++;
-if(taps===5){
-if(prompt("Enter PIN")==="6356"){
-document.getElementById("admin").style.display="block";
-}
-taps=0;
-}
-};
+  populateMembers();
+  document.getElementById("title").onclick=()=>{
+    taps++;
+    if(taps===5){
+      if(prompt("Enter Admin PIN")==="6356"){
+        document.getElementById("adminPanel").style.display="block";
+      }
+      taps=0;
+    }
+  };
 });
-</script>
 
-<style>
-body{font-family:Arial;background:#f4f6f9;padding:20px}
-.card{background:white;padding:10px;margin:8px;border-radius:6px}
-.small{font-size:13px}
-button{margin-left:10px}
-#admin{display:none;margin-top:20px}
-</style>
+</script>
 </head>
+
 <body>
 
 <h1 id="title">Subham Savings Group</h1>
 
+<div id="totals"></div>
 <div id="members"></div>
-
 <div id="transactions"></div>
 
-<div id="admin">
+<div id="adminPanel" class="card">
 <h3>Admin Panel</h3>
-<button onclick="addSavings()">Add Savings</button>
-<button onclick="addLoan()">Give Loan</button>
-<button onclick="addPayment()">Loan Payment</button>
-<button onclick="addInterest()">Interest Payment</button>
+
+<select id="memberSelect"></select>
+
+<select id="typeSelect">
+<option value="savings">Savings Deposit</option>
+<option value="loan">Loan Given</option>
+<option value="payment">Loan Payment</option>
+<option value="interest">Interest Payment</option>
+</select>
+
+<input type="number" id="amountInput" placeholder="Amount (KRW)">
+<input type="date" id="dateInput">
+
+<button onclick="submitTransaction()">Submit</button>
 <button onclick="exportPDF()">Export PDF</button>
+
 </div>
 
 </body>
