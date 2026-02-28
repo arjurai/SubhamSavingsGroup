@@ -324,6 +324,19 @@ let filtered = transactions.filter(t => {
    return true;
 });
 
+// SORT BY DATE DESCENDING (NEWEST FIRST)
+filtered.sort((a, b) => {
+  let dateA = (a.date && typeof a.date.toDate === "function")
+    ? a.date.toDate()
+    : new Date(a.date);
+
+  let dateB = (b.date && typeof b.date.toDate === "function")
+    ? b.date.toDate()
+    : new Date(b.date);
+
+  return dateB - dateA; // newest first
+});
+
 filteredTransactions = filtered;
 /* ================= STEP 4 — BUILD TRANSACTION TABLE ================= */
 
