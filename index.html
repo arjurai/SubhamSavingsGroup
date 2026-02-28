@@ -280,10 +280,6 @@ past.setMonth(past.getMonth()-parseInt(quick));
 if(txDate<past) return false;
 }
 
-if(from && to){
-let diff=(new Date(to)-new Date(from))/(1000*60*60*24);
-if(diff>365) return alert("Max 1 year range");
-}
 
 if(from && txDate<new Date(from)) return false;
 if(to && txDate>new Date(to)) return false;
