@@ -4,284 +4,313 @@
 <meta charset="UTF-8">
 <title>Subham Savings Group</title>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { 
+getFirestore, collection, addDoc, deleteDoc, doc, 
+onSnapshot, query, orderBy, updateDoc 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+window.firebaseModules = {
+initializeApp,
+getFirestore,
+collection,
+addDoc,
+deleteDoc,
+doc,
+onSnapshot,
+query,
+orderBy,
+updateDoc
+};
+</script>
+
+<!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
 <style>
-body{font-family:Arial;background:#f1f5f9;margin:0;}
+body{font-family:Arial;margin:0;background:#f4f6fa;}
 header{
 background:linear-gradient(45deg,#1e3c72,#2a5298);
 color:white;text-align:center;padding:25px;
-font-size:26px;font-weight:bold;
+font-size:26px;font-weight:bold;cursor:pointer;
 }
 .container{padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:20px;}
 .full{grid-column:1/3;}
-.card{background:white;padding:15px;border-radius:12px;
-box-shadow:0 3px 10px rgba(0,0,0,0.1);}
+.card{
+background:white;padding:15px;border-radius:12px;
+box-shadow:0 3px 10px rgba(0,0,0,0.1);
+}
 .members-grid{
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
 gap:15px;
 }
 .member-card{
-background:white;padding:12px;border-radius:10px;
+padding:12px;border-radius:10px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
+background:white;
 }
-.transaction-box{
-background:white;padding:8px;border-radius:8px;
-margin-bottom:6px;
+.transaction{
+padding:8px;margin-bottom:6px;border-radius:6px;
 box-shadow:0 2px 5px rgba(0,0,0,0.1);
+background:white;
 }
-.blue{color:blue;}
-.red{color:red;}
-.green{color:green;}
 button{padding:6px 10px;margin-top:5px;}
-select,input{padding:5px;margin-top:5px;width:100%;}
+select,input,textarea{padding:5px;margin-top:5px;width:100%;}
+.admin-only{display:none;}
+.blue{color:#1e3c72;}
+.green{color:green;}
+.red{color:red;}
 </style>
 </head>
 
 <body>
 
-<header>Subham Savings Group</header>
+<header onclick="adminClick()">Subham Savings Group</header>
 
 <div class="container">
 
-<!-- DASHBOARD -->
 <div class="card">
-<h3>📊 Group Dashboard</h3>
-<p>Total Money Invested: <b id="totalInvested">0</b> KRW</p>
+<h3>📊 Dashboard</h3>
+<p>Total Savings: <b id="totalSavings">0</b> KRW</p>
+<p>Total Interest: <b id="totalInterest">0</b> KRW</p>
+<p>Total Invested: <b id="totalInvested">0</b> KRW</p>
 <p>Money Available: <b id="moneyAvailable">0</b> KRW</p>
 <p>Share Per Person: <b id="sharePerPerson">0</b> KRW</p>
+<p>Total Capital of Group: <b id="totalCapital">0</b> KRW</p>
 </div>
 
-<!-- ADD TRANSACTION -->
 <div class="card">
 <h3>➕ Add Transaction</h3>
 <select id="memberSelect"></select>
 <select id="typeSelect">
 <option value="savings">Savings</option>
 <option value="loan">Loan</option>
+<option value="repayment">Repayment</option>
 </select>
 <input type="number" id="amountInput" placeholder="Amount">
 <input type="date" id="dateInput">
 <button onclick="addTransaction()">Add</button>
 </div>
 
-<!-- MEMBERS -->
 <div class="full">
-<h3>👥 Members Overview</h3>
+<h3>👥 Members</h3>
 <div id="members" class="members-grid"></div>
 </div>
 
-<!-- TRANSACTIONS -->
 <div class="full card">
-<h3>📑 Transactions Panel</h3>
-
+<h3>📑 Transactions</h3>
 <select id="filterMember">
 <option value="all">All Members</option>
 </select>
-
 <select id="filterPeriod">
 <option value="all">All Time</option>
 <option value="3">Last 3 Months</option>
 <option value="6">Last 6 Months</option>
 <option value="12">Last 1 Year</option>
 </select>
-
-<button onclick="loadFilteredTransactions()">Apply</button>
-<button onclick="exportFilteredPDF()">Export PDF</button>
-
+<button onclick="loadTransactions()">Apply</button>
+<button onclick="exportPDF()">Export PDF</button>
 <div id="transactionList"></div>
+</div>
+
+<div class="full card">
+<h3>📢 Notice Board</h3>
+<textarea id="noticeText" placeholder="Write notice (Admin only)"></textarea>
+<button class="admin-only" onclick="saveNotice()">Save Notice</button>
+<p id="noticeDisplay"></p>
 </div>
 
 </div>
 
 <script type="module">
 
-/* ========= FIREBASE CONFIG ========= */
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const { initializeApp,getFirestore,collection,addDoc,deleteDoc,doc,onSnapshot,query,orderBy,updateDoc } = window.firebaseModules;
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD8BSnJDY4ue-ifwK2G-so-3mWXr8OOepY",
-  authDomain: "subhamsavingsgroup.firebaseapp.com",
-  projectId: "subhamsavingsgroup",
-  storageBucket: "subhamsavingsgroup.firebasestorage.app",
-  messagingSenderId: "608599590080",
-  appId: "1:608599590080:web:ca8cb8dca8b2618ec55925"
+apiKey:"AIzaSyD8BSnJDY4ue-ifwK2G-so-3mWXr8OOepY",
+authDomain:"subhamsavingsgroup.firebaseapp.com",
+projectId:"subhamsavingsgroup",
+storageBucket:"subhamsavingsgroup.firebasestorage.app",
+messagingSenderId:"608599590080",
+appId:"1:608599590080:web:ca8cb8dca8b2618ec55925"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* ========= MEMBERS ========= */
-
 const members=[
-"RAI ARJU",
-"SHERMA BHAKTI",
-"BUDHATHOKI SUKDEV",
-"SHAHI LAXMAN BAHADUR",
-"SHRESTHA TEKINDRA",
-"GHIMIRE SURESH",
-"TIWARI SURYA PARSAD",
-"TAMANG KESHAR",
-"RAI MANDIP",
-"MAGAR MIM DARLAMI"
+"RAI ARJU","SHERMA BHAKTI","BUDHATHOKI SUKDEV",
+"SHAHI LAXMAN BAHADUR","SHRESTHA TEKINDRA",
+"GHIMIRE SURESH","TIWARI SURYA PARSAD",
+"TAMANG KESHAR","RAI MANDIP","MAGAR MIM DARLAMI"
 ];
 
 let transactions=[];
+let admin=false;
+let clickCount=0;
 
 members.forEach(m=>{
-document.getElementById("memberSelect").innerHTML+=`<option>${m}</option>`;
-document.getElementById("filterMember").innerHTML+=`<option value="${m}">${m}</option>`;
+memberSelect.innerHTML+=`<option>${m}</option>`;
+filterMember.innerHTML+=`<option value="${m}">${m}</option>`;
 });
 
-/* ========= ADD TRANSACTION ========= */
+function adminClick(){
+clickCount++;
+if(clickCount===5){
+let pin=prompt("Enter Admin PIN");
+if(pin==="6356"){
+admin=true;
+document.querySelectorAll(".admin-only").forEach(e=>e.style.display="block");
+alert("Admin Logged In");
+}else alert("Wrong PIN");
+clickCount=0;
+}
+}
 
-window.addTransaction=async function(){
-
-let member=document.getElementById("memberSelect").value;
-let type=document.getElementById("typeSelect").value;
-let amount=document.getElementById("amountInput").value;
-let date=document.getElementById("dateInput").value;
-
-if(!amount||!date) return alert("Fill all fields");
+window.addTransaction=async()=>{
+let member=memberSelect.value;
+let type=typeSelect.value;
+let amount=Number(amountInput.value);
+let date=dateInput.value;
+if(!amount||!date)return alert("Fill all");
 
 await addDoc(collection(db,"transactions"),{
-member,
-type,
-amount:Number(amount),
-date,
-createdAt:new Date()
+member,type,amount,date,createdAt:new Date()
 });
-
-document.getElementById("amountInput").value="";
+amountInput.value="";
 };
 
-/* ========= REALTIME LISTENER ========= */
-
 const q=query(collection(db,"transactions"),orderBy("createdAt","desc"));
-
-onSnapshot(q,(snapshot)=>{
+onSnapshot(q,(snap)=>{
 transactions=[];
-snapshot.forEach(doc=>{
-transactions.push({id:doc.id,...doc.data()});
-});
+snap.forEach(d=>transactions.push({id:d.id,...d.data()}));
 render();
 });
 
-/* ========= RENDER ========= */
-
 function render(){
 renderMembers();
-loadFilteredTransactions();
+loadTransactions();
 updateDashboard();
 }
 
 function renderMembers(){
-
-let container=document.getElementById("members");
-container.innerHTML="";
-
+membersDiv="";
 members.forEach(name=>{
-let savings=0;
-let loan=0;
-
+let savings=0,loan=0;
 transactions.forEach(t=>{
 if(t.member===name){
-if(t.type==="savings") savings+=t.amount;
-if(t.type==="loan") loan+=t.amount;
+if(t.type==="savings")savings+=t.amount;
+if(t.type==="loan")loan+=t.amount;
 }
 });
-
-container.innerHTML+=`
+membersDiv+=`
 <div class="member-card">
-<h4>${name}</h4>
-<p>Savings: <span class="blue">${savings}</span></p>
-<p>Loan: <span class="red">${loan}</span></p>
-<p>Balance: <span class="green">${savings-loan}</span></p>
-</div>
-`;
+<b>${name}</b>
+<p>Savings: ${savings}</p>
+<p>Loan: ${loan}</p>
+<p>Balance: ${savings-loan}</p>
+</div>`;
 });
+document.getElementById("members").innerHTML=membersDiv;
+}
+
+function calculateInterest(){
+let totalInterest=0;
+transactions.forEach(t=>{
+if(t.type==="loan"){
+let start=new Date(t.date);
+let now=new Date();
+let months=(now-start)/(1000*60*60*24*30);
+if(months>0.5){ // 15 day grace
+totalInterest+=t.amount*0.01*Math.floor(months);
+}
+}
+});
+return Math.floor(totalInterest);
 }
 
 function updateDashboard(){
-
-let totalSavings=0;
-let totalLoan=0;
-
+let totalSavings=0,totalLoan=0;
 transactions.forEach(t=>{
-if(t.type==="savings") totalSavings+=t.amount;
-if(t.type==="loan") totalLoan+=t.amount;
+if(t.type==="savings")totalSavings+=t.amount;
+if(t.type==="loan")totalLoan+=t.amount;
+if(t.type==="repayment")totalLoan-=t.amount;
 });
-
-document.getElementById("totalInvested").innerText=totalLoan;
-document.getElementById("moneyAvailable").innerText=totalSavings-totalLoan;
-document.getElementById("sharePerPerson").innerText=
-Math.floor((totalSavings-totalLoan)/members.length);
+let interest=calculateInterest();
+totalSavingsEl.innerText=totalSavings;
+totalInterest.innerText=interest;
+totalInvested.innerText=totalLoan;
+moneyAvailable.innerText=totalSavings-totalLoan;
+sharePerPerson.innerText=Math.floor((totalSavings-totalLoan)/members.length);
+totalCapital.innerText=totalSavings+interest;
 }
 
-window.loadFilteredTransactions=function(){
+window.loadTransactions=function(){
+let selected=filterMember.value;
+let period=filterPeriod.value;
+let list=[...transactions];
 
-let selectedMember=document.getElementById("filterMember").value;
-let period=document.getElementById("filterPeriod").value;
-
-let filtered=[...transactions];
-
-if(selectedMember!=="all"){
-filtered=filtered.filter(t=>t.member===selectedMember);
-}
+if(selected!=="all")list=list.filter(t=>t.member===selected);
 
 if(period!=="all"){
 let months=parseInt(period);
 let cutoff=new Date();
 cutoff.setMonth(cutoff.getMonth()-months);
-filtered=filtered.filter(t=> new Date(t.date)>=cutoff);
+list=list.filter(t=>new Date(t.date)>=cutoff);
 }
 
-let container=document.getElementById("transactionList");
-container.innerHTML="";
-
-filtered.forEach(t=>{
-container.innerHTML+=`
-<div class="transaction-box">
+let html="";
+list.forEach(t=>{
+html+=`
+<div class="transaction">
 <b>${t.member}</b> | ${t.date} | ${t.type} | ${t.amount} KRW
+${admin?`<button onclick="deleteTx('${t.id}')">Delete</button>`:""}
 </div>`;
 });
+transactionList.innerHTML=html;
 };
 
-/* ========= PDF ========= */
+window.deleteTx=async(id)=>{
+if(!admin)return;
+await deleteDoc(doc(db,"transactions",id));
+};
 
-window.exportFilteredPDF=function(){
-
-let { jsPDF } = window.jspdf;
+window.exportPDF=function(){
+let { jsPDF }=window.jspdf;
 let doc=new jsPDF();
 
 doc.setFillColor(30,60,114);
 doc.rect(0,0,210,30,"F");
 doc.setTextColor(255);
-doc.setFontSize(18);
-doc.text("SSG",14,18);
-doc.setFontSize(14);
-doc.text("Subham Savings Group",40,18);
+doc.setFontSize(16);
+doc.text("Subham Savings Group",20,18);
 doc.setTextColor(0);
 
-let tableData=transactions.map(t=>[
-t.member,t.date,t.type,t.amount+" KRW"
+let data=transactions.map(t=>[
+t.member,
+t.date,
+t.type,
+t.amount+" KRW"
 ]);
 
 doc.autoTable({
 startY:40,
 head:[["Member","Date","Type","Amount"]],
-body:tableData
+body:data,
+styles:{cellPadding:3,fontSize:9},
+columnStyles:{
+0:{cellWidth:50},
+1:{cellWidth:35},
+2:{cellWidth:30},
+3:{cellWidth:35}
+}
 });
 
-doc.save("Transaction_Report.pdf");
+doc.save("SSG_Report.pdf");
 };
 
 </script>
