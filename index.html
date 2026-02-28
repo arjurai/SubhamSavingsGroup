@@ -4,8 +4,14 @@
 <meta charset="UTF-8">
 <title>Subham Savings Group</title>
 
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getDocs as getDocs2 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+window.jspdfLoaded = false;
+</script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
@@ -13,7 +19,6 @@ body{
 font-family:Arial;
 background:#f1f5f9;
 margin:0;
-padding:0;
 }
 
 header{
@@ -24,51 +29,74 @@ padding:25px;
 font-size:28px;
 font-weight:bold;
 letter-spacing:2px;
-box-shadow:0 4px 10px rgba(0,0,0,0.3);
 }
 
-.container{padding:20px;}
+.container{
+padding:20px;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+}
+
+.full{
+grid-column:1/3;
+}
 
 .card{
 background:white;
 padding:15px;
 border-radius:12px;
-margin-bottom:15px;
 box-shadow:0 3px 10px rgba(0,0,0,0.1);
 }
 
-h3{margin-top:0;}
-
-button{
-padding:8px 12px;
-border:none;
-border-radius:8px;
-cursor:pointer;
-background:#2a5298;
-color:white;
-margin-top:5px;
+.members-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+gap:15px;
 }
 
-input,select,textarea{
-padding:8px;
-margin:5px 0;
-width:100%;
-border-radius:6px;
-border:1px solid #ccc;
+.member-card{
+background:white;
+padding:15px;
+border-radius:12px;
+box-shadow:0 3px 10px rgba(0,0,0,0.1);
+cursor:pointer;
+transition:0.2s;
+}
+
+.member-card:hover{
+transform:scale(1.02);
+}
+
+.transaction-box{
+background:white;
+padding:12px;
+border-radius:10px;
+margin-bottom:10px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 .blue{color:blue;}
 .red{color:red;}
 .green{color:green;}
-
 .hidden{display:none;}
 
-.notice{
-background:#fff8dc;
-padding:10px;
-border-left:5px solid orange;
-margin-bottom:10px;
+button{
+padding:8px 12px;
+border:none;
 border-radius:8px;
+background:#2a5298;
+color:white;
+cursor:pointer;
+margin-top:5px;
+}
+
+input,select,textarea{
+width:100%;
+padding:8px;
+margin:5px 0;
+border-radius:6px;
+border:1px solid #ccc;
 }
 </style>
 </head>
@@ -78,62 +106,59 @@ border-radius:8px;
 
 <div class="container">
 
-<!-- NOTICE BOARD -->
-<div class="card">
-<h3>📢 Notice Board</h3>
-
-<div id="noticeList"></div>
-
-<div id="noticeAdmin" class="hidden">
-<textarea id="noticeText" placeholder="Write new notice..."></textarea>
-<button onclick="addNotice()">Post Notice</button>
-</div>
-</div>
-
-<!-- DASHBOARD -->
 <div class="card">
 <h3>📊 Group Dashboard</h3>
-<p>Total Group Money: <span class="green" id="totalGroup">0</span> KRW</p>
-<p>Total Savings Collected: <span class="blue" id="totalSavings">0</span> KRW</p>
-<p>Total Interest Collected: <span class="green" id="totalInterest">0</span> KRW</p>
+<p>Total Savings: <span class="blue" id="totalSavings">0</span> KRW</p>
+<p>Total Interest: <span class="green" id="totalInterest">0</span> KRW</p>
+<p>Total Invested: <span class="red" id="totalInvested">0</span> KRW</p>
+<p>Money Available: <span class="green" id="moneyAvailable">0</span> KRW</p>
+<p>Share Per Person (10): <span class="blue" id="sharePerPerson">0</span> KRW</p>
 </div>
 
-<!-- ADMIN PANEL -->
 <div class="card">
 <h3>🔐 Admin Login</h3>
-<input type="password" id="adminPin" placeholder="Enter PIN">
+<input type="password" id="pin" placeholder="Enter PIN">
 <button onclick="login()">Login</button>
 
 <div id="adminPanel" class="hidden">
-<h4>Add Transaction</h4>
-
 <select id="memberSelect"></select>
 
 <select id="type">
-<option value="savings">Savings Deposit</option>
-<option value="loan">Loan Given</option>
+<option value="savings">Savings</option>
+<option value="loan">Loan</option>
 <option value="principal_payment">Principal Payment</option>
 <option value="interest_payment">Interest Payment</option>
 </select>
 
 <input type="number" id="amount" placeholder="Amount">
 <input type="date" id="date">
-
 <button onclick="addTransaction()">Add Transaction</button>
 </div>
 </div>
 
-<!-- MEMBERS -->
-<div class="card">
-<h3>👥 Members Overview</h3>
-<div id="members"></div>
+<div class="full">
+<h3>👥 Members</h3>
+<div id="members" class="members-grid"></div>
 </div>
 
-<!-- MEMBER DETAIL PANEL -->
-<div class="card hidden" id="memberPanel">
-<h3 id="memberTitle"></h3>
-<button onclick="exportPDF()">📄 Export PDF</button>
-<div id="memberTransactions"></div>
+<div class="full card">
+<h3>📑 Transactions Panel</h3>
+
+<select id="filterMember">
+<option value="all">All Members</option>
+</select>
+
+<select id="filterPeriod">
+<option value="all">All Time</option>
+<option value="3">Last 3 Months</option>
+<option value="6">Last 6 Months</option>
+<option value="12">Last 1 Year</option>
+</select>
+
+<button onclick="loadFiltered()">Apply Filter</button>
+<button onclick="exportPDF()">Export PDF</button>
+
+<div id="transactionsView"></div>
 </div>
 
 </div>
@@ -169,74 +194,36 @@ const members=[
 ];
 
 let transactions=[];
-let notices=[];
 let admin=false;
-let currentMember=null;
 
 members.forEach(m=>{
 document.getElementById("memberSelect").innerHTML+=`<option>${m}</option>`;
+document.getElementById("filterMember").innerHTML+=`<option value="${m}">${m}</option>`;
 });
 
 window.login=function(){
-if(document.getElementById("adminPin").value==="6356"){
+if(document.getElementById("pin").value==="6356"){
 admin=true;
 document.getElementById("adminPanel").classList.remove("hidden");
-document.getElementById("noticeAdmin").classList.remove("hidden");
 alert("Admin Logged In");
 }
 }
 
 window.addTransaction=async function(){
-if(!admin)return alert("Admin only");
-let member=document.getElementById("memberSelect").value;
-let type=document.getElementById("type").value;
+if(!admin)return alert("Admin Only");
+let member=memberSelect.value;
+let type=type.value;
 let amount=parseFloat(document.getElementById("amount").value);
 let date=document.getElementById("date").value;
-
 await addDoc(collection(db,"transactions"),{member,type,amount,date});
 loadData();
-}
-
-window.addNotice=async function(){
-if(!admin)return;
-let text=document.getElementById("noticeText").value;
-if(!text)return;
-await addDoc(collection(db,"notices"),{
-text,
-date:new Date().toISOString().split("T")[0]
-});
-document.getElementById("noticeText").value="";
-loadNotices();
-}
-
-async function loadNotices(){
-notices=[];
-const snap=await getDocs(collection(db,"notices"));
-snap.forEach(d=>notices.push({...d.data(),id:d.id}));
-
-let container=document.getElementById("noticeList");
-container.innerHTML="";
-notices.forEach(n=>{
-container.innerHTML+=`
-<div class="notice">
-<b>${n.date}</b>
-<p>${n.text}</p>
-${admin?`<button onclick="deleteNotice('${n.id}')">Delete</button>`:""}
-</div>`;
-});
-}
-
-window.deleteNotice=async function(id){
-if(!admin)return;
-await deleteDoc(doc(db,"notices",id));
-loadNotices();
 }
 
 async function loadData(){
 transactions=[];
 const snap=await getDocs(collection(db,"transactions"));
 snap.forEach(d=>transactions.push({...d.data(),id:d.id}));
-renderMembers();
+render();
 }
 
 function calculateInterest(p,start,end){
@@ -247,10 +234,11 @@ if(diff%30<=15)return p*0.01*months;
 return p*0.01*(months+1);
 }
 
-function renderMembers(){
+function render(){
+let totalSavings=0,totalInterest=0,totalInvested=0;
+
 let container=document.getElementById("members");
 container.innerHTML="";
-let totalSavings=0,totalInterest=0,totalGroup=0;
 
 members.forEach(name=>{
 let tx=transactions.filter(t=>t.member===name);
@@ -259,7 +247,6 @@ let loan=tx.filter(t=>t.type==="loan").reduce((a,b)=>a+b.amount,0);
 let principal=tx.filter(t=>t.type==="principal_payment").reduce((a,b)=>a+b.amount,0);
 let interest=tx.filter(t=>t.type==="interest_payment").reduce((a,b)=>a+b.amount,0);
 
-let balance=savings-principal+interest-loan;
 let principalDue=loan-principal;
 let dueInterest=0;
 
@@ -270,13 +257,12 @@ dueInterest-=interest;
 
 totalSavings+=savings;
 totalInterest+=interest;
-totalGroup+=balance;
+totalInvested+=principalDue;
 
 container.innerHTML+=`
-<div class="card">
-<h4 onclick="openMember('${name}')">${name}</h4>
+<div class="member-card">
+<h4>${name}</h4>
 <p>Savings: <span class="blue">${savings}</span></p>
-<p>Balance: <span class="green">${balance}</span></p>
 <p>Due Principal: <span class="red">${principalDue}</span></p>
 <p>Due Interest: <span class="red">${dueInterest}</span></p>
 </div>`;
@@ -284,47 +270,61 @@ container.innerHTML+=`
 
 document.getElementById("totalSavings").innerText=totalSavings;
 document.getElementById("totalInterest").innerText=totalInterest;
-document.getElementById("totalGroup").innerText=totalGroup;
+document.getElementById("totalInvested").innerText=totalInvested;
+
+let available=totalSavings+totalInterest-totalInvested;
+document.getElementById("moneyAvailable").innerText=available;
+
+document.getElementById("sharePerPerson").innerText=((totalSavings+totalInterest)/10).toFixed(2);
 }
 
-window.openMember=function(name){
-currentMember=name;
-document.getElementById("memberPanel").classList.remove("hidden");
-document.getElementById("memberTitle").innerText=name+" - Transactions";
+window.loadFiltered=function(){
+let member=filterMember.value;
+let period=filterPeriod.value;
+let filtered=[...transactions];
 
-let container=document.getElementById("memberTransactions");
-container.innerHTML="";
+if(member!=="all"){
+filtered=filtered.filter(t=>t.member===member);
+}
 
-transactions.filter(t=>t.member===name).forEach(t=>{
-container.innerHTML+=`
-<div>
-${t.date} - ${t.type} - ${t.amount}
-${admin?`<button onclick="deleteTransaction('${t.id}')">Delete</button>`:""}
+if(period!=="all"){
+let cutoff=new Date();
+cutoff.setMonth(cutoff.getMonth()-parseInt(period));
+filtered=filtered.filter(t=>new Date(t.date)>=cutoff);
+}
+
+let view=document.getElementById("transactionsView");
+view.innerHTML="";
+
+filtered.forEach(t=>{
+view.innerHTML+=`
+<div class="transaction-box">
+<b>${t.member}</b><br>
+${t.date} — ${t.type} — ${t.amount}
+${admin?`<button onclick="deleteTx('${t.id}')">Delete</button>`:""}
 </div>`;
 });
 }
 
-window.deleteTransaction=async function(id){
+window.deleteTx=async function(id){
 if(!admin)return;
 await deleteDoc(doc(db,"transactions",id));
 loadData();
 }
 
 window.exportPDF=function(){
-let { jsPDF } = window.jspdf;
+let { jsPDF }=window.jspdf;
 let doc=new jsPDF();
-doc.text("Subham Savings Group",20,20);
-doc.text(currentMember,20,30);
-let y=40;
-transactions.filter(t=>t.member===currentMember).forEach(t=>{
-doc.text(`${t.date} - ${t.type} - ${t.amount}`,20,y);
+doc.text("Subham Savings Group - Report",20,20);
+let y=30;
+document.querySelectorAll(".transaction-box").forEach(box=>{
+doc.text(box.innerText,20,y);
 y+=10;
 });
-doc.save(currentMember+".pdf");
+doc.save("Report.pdf");
 }
 
 loadData();
-loadNotices();
 
 </script>
 </body>
