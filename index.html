@@ -198,24 +198,33 @@ updateDashboard();
 }
 
 function renderMembers(){
-membersDiv="";
+
+let container = document.getElementById("members");
+container.innerHTML = "";
+
 members.forEach(name=>{
-let savings=0,loan=0;
+
+let savings = 0;
+let loan = 0;
+
 transactions.forEach(t=>{
 if(t.member===name){
-if(t.type==="savings")savings+=t.amount;
-if(t.type==="loan")loan+=t.amount;
+if(t.type==="savings") savings += t.amount;
+if(t.type==="loan") loan += t.amount;
+if(t.type==="repayment") loan -= t.amount;
 }
 });
-membersDiv+=`
+
+container.innerHTML += `
 <div class="member-card">
-<b>${name}</b>
-<p>Savings: ${savings}</p>
-<p>Loan: ${loan}</p>
-<p>Balance: ${savings-loan}</p>
-</div>`;
+<h4>${name}</h4>
+<p>Savings: <span class="blue">${savings} KRW</span></p>
+<p>Loan: <span class="red">${loan} KRW</span></p>
+<p>Balance: <span class="green">${savings-loan} KRW</span></p>
+</div>
+`;
 });
-document.getElementById("members").innerHTML=membersDiv;
+
 }
 
 function calculateInterest(){
