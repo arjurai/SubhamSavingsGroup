@@ -195,7 +195,13 @@ admin=true;
 document.getElementById("adminBadge").style.display="inline";
 document.getElementById("loginBtn").style.display="none";
 document.getElementById("logoutBtn").style.display="inline";
-document.querySelectorAll(".admin-only").forEach(e=>e.style.display="table-cell");
+document.querySelectorAll(".admin-only").forEach(e=>{
+   if(e.tagName === "TD" || e.tagName === "TH"){
+      e.style.display = "table-cell";
+   }else{
+      e.style.display = "block";
+   }
+});
 }
 }
 
@@ -383,18 +389,25 @@ let lastLoanDate=null;
 transactions.forEach(t=>{
 if(t.member===name){
 if(t.type==="savings") savings+=t.amount;
-if(t.type==="loan_given"){ loan+=t.amount; lastLoanDate=t.date;}
+if(t.type==="loan_given"){ 
+   loan+=t.amount; 
+   lastLoanDate=t.date.toDate();
+}
 if(t.type==="loan_payment") loan-=t.amount;
 if(t.type==="interest_payment") interestPaid+=t.amount;
 }
 });
 
-let interestDue=0;
+let interestDue = 0;
 
-if(loan>0 && lastLoanDate){
-let months=(new Date()-new Date(lastLoanDate))/(1000*60*60*24*30);
-interestDue=loan*INTEREST_RATE*months - interestPaid;
-if(interestDue<0) interestDue=0;
+if(loan > 0 && lastLoanDate){
+
+   let now = new Date();
+   let months = (now - lastLoanDate) / (1000 * 60 * 60 * 24 * 30);
+
+   interestDue = (loan * INTEREST_RATE * months) - interestPaid;
+
+   if(interestDue < 0) interestDue = 0;
 }
 
 container.innerHTML+=`
