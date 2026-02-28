@@ -190,7 +190,7 @@ filterMember.add(o2);
 
 function adminLogin(){
 let pin=prompt("Enter Admin PIN");
-if(pin==="63568881"){
+if(pin==="6356"){
 admin=true;
 document.getElementById("adminBadge").style.display="inline";
 document.getElementById("loginBtn").style.display="none";
@@ -231,12 +231,20 @@ if(!amount||!date) return alert("Enter all fields");
 
 if(editingId){
 
-db.collection("transactions").doc(editingId).update({
-member,
-type,
-amount,
-date: firebase.firestore.Timestamp.fromDate(new Date(date))
-});
+  db.collection("transactions").doc(editingId).update({
+    member,
+    type,
+    amount,
+    date: firebase.firestore.Timestamp.fromDate(new Date(date))
+  }).then(() => {
+
+    editingId = null;
+    document.getElementById("saveBtn").innerText = "Add";
+    document.getElementById("transactionForm").reset();
+
+  });
+
+}
 
 editingId=null;
 document.getElementById("saveBtn").innerText="Add";
@@ -339,9 +347,11 @@ table += `
 <td>${t.member}</td>
 <td>${t.type}</td>
 <td>${Number(t.amount).toLocaleString()} KRW</td>
-<td class="admin-only">
-<button onclick="editTx('${t.id}')">Edit</button>
-<button onclick="deleteTx('${t.id}')">Delete</button>
+<td>
+  ${admin ? `
+    <button onclick="editTx('${t.id}')">Edit</button>
+    <button onclick="deleteTx('${t.id}')">Delete</button>
+  ` : ""}
 </td>
 </tr>
 `;
