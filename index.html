@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
-<head>
+<head> <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e3c72"> <head>
 <meta charset="UTF-8">
 <title>Subham Savings Group</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -329,6 +330,14 @@ container.innerHTML+=`
 });
 }
 
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js")
+      .then(reg => console.log("Service Worker Registered"))
+      .catch(err => console.log("Service Worker Failed", err));
+  });
+}
 </script>
 
 </body>
