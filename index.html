@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subham Savings Group</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a237e">
+
+<style>
+body { font-family: Arial; background:#f4f6f9; margin:0; padding:15px;}
+h1 { text-align:center; color:#1a237e; cursor:pointer;}
+.card { background:white; padding:15px; margin:10px 0; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+.blue { color:#1565c0; font-weight:bold;}
+.red { color:#c62828; font-weight:bold;}
+.green { color:#2e7d32; font-weight:bold;}
+button { padding:6px 10px; margin:3px; border:none; border-radius:6px; cursor:pointer;}
+.primary { background:#1a237e; color:white;}
+.edit { background:#f9a825; color:white;}
+.delete { background:#c62828; color:white;}
+input, select { padding:6px; margin:5px 0; width:100%; }
+.hidden { display:none; }
+.transaction { font-size:14px; border-top:1px solid #ddd; padding-top:5px; margin-top:5px;}
+</style>
+</head>
+<body>
+
+<h1 onclick="tapTitle()">Subham Savings Group</h1>
+
+<div id="adminLogin" class="card hidden">
+<h3>Admin Login</h3>
+<input type="password" id="pinInput" placeholder="Enter PIN">
+<button class="primary" onclick="login()">Login</button>
+</div>
+
+<div id="adminPanel" class="hidden">
+
+<div class="card">
+<h3>Add Savings</h3>
+<select id="memberSelect"></select>
+<input type="number" id="savingAmount">
+<input type="date" id="savingDate">
+<button class="primary" onclick="addSaving()">Add</button>
+</div>
+
+<div class="card">
+<h3>Give Loan</h3>
+<select id="loanMember"></select>
+<input type="number" id="loanAmount">
+<input type="date" id="loanDate">
+<button class="primary" onclick="giveLoan()">Add</button>
+</div>
+
+<div class="card">
+<h3>Loan Payment</h3>
+<select id="payMember"></select>
+<input type="number" id="payAmount">
+<input type="date" id="payDate">
+<button class="primary" onclick="addPayment()">Add</button>
+</div>
+
+<div class="card">
+<h3>Interest Payment</h3>
+<select id="interestMember"></select>
+<input type="number" id="interestAmount">
+<input type="date" id="interestDate">
+<button class="primary" onclick="addInterestPayment()">Add</button>
+</div>
+
+</div>
+
+<div class="card">
+<h3>📊 Group Dashboard</h3>
+<div id="dash"></div>
+</div>
+
+<div class="card">
+<h3>Members Overview</h3>
+<div id="membersList"></div>
+</div>
+
+<script>
+const PIN="6356";
+const INTEREST=0.01;
+const GRACE=15;
+let tap=0;
+let isAdmin=false;
+
+function tapTitle(){ tap++; if(tap>=5){adminLogin.classList.remove("hidden"); tap=0;} }
+
+function login(){
+if(pinInput.value===PIN){
+adminPanel.classList.remove("hidden");
+isAdmin=true;
+alert("Admin Mode Activated");
+render();
+}
+}
+
+let members=[
+"RAI ARJU","SHERMA BHAKTI","BUDHATHOKI SUKDEV",
+"SHAHI LAXMAN BAHADUR","SHRESTHA TEKINDRA",
+"GHIMIRE SURESH","TIWARI SURYA PARSAD",
+"TAMANG KESHAR","RAI MANDIP","MAGAR MIM DARLAMI"
+];
+
+let data=JSON.parse(localStorage.getItem("groupDataV3"))||{};
+members.forEach(m=>{
+if(!data[m]) data[m]={savings:[],loans:[],payments:[],interestPayments:[]};
+});
+
+function save(){localStorage.setItem("groupDataV3",JSON.stringify(data));}
+
+function populate(){
+["memberSelect","loanMember","payMember","interestMember"].forEach(id=>{
+let s=document.getElementById(id);
+members.forEach(m=>{
+let o=document.createElement("option");
+o.value=m;o.text=m;s.appendChild(o);
+});
+});
+}
+populate();
+
+function addSaving(){ data[memberSelect.value].savings.push({amount:+savingAmount.value,date:savingDate.value}); save(); render();}
+function giveLoan(){ data[loanMember.value].loans.push({amount:+loanAmount.value,date:loanDate.value}); save(); render();}
+function addPayment(){ data[payMember.value].payments.push({amount:+payAmount.value,date:payDate.value}); save(); render();}
+function addInterestPayment(){ data[interestMember.value].interestPayments.push({amount:+interestAmount.value,date:interestDate.value}); save(); render();}
+
+function calc(member){
+let principal=0,interestDue=0,paidPrincipal=0,paidInterest=0;
+
+data[member].loans.forEach(l=>{
+let days=Math.floor((new Date()-new Date(l.date))/(1000*60*60*24));
+let months=Math.floor(days/30);
+let extra=days%30;
+if(months===0) months=1;
+else if(extra>=GRACE) months++;
+principal+=l.amount;
+interestDue+=l.amount*INTEREST*months;
+});
+
+data[member].payments.forEach(p=>paidPrincipal+=p.amount);
+data[member].interestPayments.forEach(p=>paidInterest+=p.amount);
+
+return {
+principalDue:principal-paidPrincipal,
+interestDue:interestDue-paidInterest,
+totalDue:(principal-paidPrincipal)+(interestDue-paidInterest),
+totalInterestCollected:paidInterest
+};
+}
+
+function render(){
+let html="";
+let totalSavings=0,totalPrincipalDue=0,totalInterestDue=0,totalInterestCollected=0;
+
+members.forEach(m=>{
+let savings=data[m].savings.reduce((a,b)=>a+b.amount,0);
+let r=calc(m);
+
+totalSavings+=savings;
+totalPrincipalDue+=r.principalDue;
+totalInterestDue+=r.interestDue;
+totalInterestCollected+=r.totalInterestCollected;
+
+html+=`
+<div class="card">
+<h4 onclick="toggle('${m}')">${m}</h4>
+<div class="blue">Savings: ₩${savings.toLocaleString()}</div>
+<div class="red">Loan Due: ₩${r.principalDue.toLocaleString()}</div>
+<div class="red">Due Interest: ₩${r.interestDue.toLocaleString()}</div>
+<div id="detail-${m}" class="hidden"></div>
+</div>`;
+});
+
+membersList.innerHTML=html;
+
+let totalMoney=totalSavings+totalInterestCollected;
+dash.innerHTML=`
+<div class="blue">Total Money in Group: ₩${totalMoney.toLocaleString()}</div>
+<div class="blue">Money from Savings: ₩${totalSavings.toLocaleString()}</div>
+<div class="green">Money from Interest: ₩${totalInterestCollected.toLocaleString()}</div>
+<div class="red">Total Loan Outstanding: ₩${(totalPrincipalDue+totalInterestDue).toLocaleString()}</div>
+<div class="green">Net Balance: ₩${(totalMoney-(totalPrincipalDue+totalInterestDue)).toLocaleString()}</div>
+`;
+}
+
+function toggle(member){
+let d=document.getElementById("detail-"+member);
+if(!d.classList.contains("hidden")){ d.classList.add("hidden"); return;}
+let content="";
+["savings","loans","payments","interestPayments"].forEach(type=>{
+data[member][type].forEach((t,i)=>{
+content+=`
+<div class="transaction">
+${type} | ₩${t.amount} | ${t.date}
+${isAdmin?`<button class="edit" onclick="edit('${member}','${type}',${i})">Edit</button>
+<button class="delete" onclick="del('${member}','${type}',${i})">Delete</button>`:""}
+</div>`;
+});
+});
+d.innerHTML=content;
+d.classList.remove("hidden");
+}
+
+function del(m,type,i){ data[m][type].splice(i,1); save(); render(); }
+function edit(m,type,i){
+let newAmount=prompt("Enter new amount:");
+let newDate=prompt("Enter new date (YYYY-MM-DD):");
+if(newAmount && newDate){
+data[m][type][i]={amount:+newAmount,date:newDate};
+save(); render();
+}
+}
+
+render();
+</script>
+</body>
+</html>
