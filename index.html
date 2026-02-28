@@ -174,6 +174,7 @@ const members=[
 let admin=false;
 let transactions=[];
 let editingId=null;
+let filteredTransactions = [];
 
 const memberSelect=document.getElementById("memberSelect");
 const filterMember=document.getElementById("filterMember");
@@ -225,7 +226,10 @@ if(!amount||!date) return alert("Enter all fields");
 if(editingId){
 
 db.collection("transactions").doc(editingId).update({
-member,type,amount,date
+member,
+type,
+amount,
+date: firebase.firestore.Timestamp.fromDate(new Date(date))
 });
 
 editingId=null;
@@ -234,7 +238,10 @@ document.getElementById("saveBtn").innerText="Add";
 }else{
 
 db.collection("transactions").add({
-member,type,amount,date
+member,
+type,
+amount,
+date: firebase.firestore.Timestamp.fromDate(new Date(date))
 });
 
 }
@@ -291,7 +298,7 @@ let filtered = transactions.filter(t => {
    if(selectedMember !== "all" && t.member !== selectedMember)
       return false;
 
-   let txDate = new Date(t.date);
+   let txDate = t.date.toDate();
 
    // Quick range filter (3 / 6 / 12 months)
    if(quick !== "all"){
@@ -307,7 +314,7 @@ let filtered = transactions.filter(t => {
    return true;
 });
 
-
+filteredTransactions = filtered;
 /* ================= STEP 4 — BUILD TRANSACTION TABLE ================= */
 
 let table = "";
@@ -316,7 +323,7 @@ filtered.forEach(t=>{
 
 table += `
 <tr>
-<td>${t.date}</td>
+<td>${t.date.toDate().toLocaleDateString()}</td>
 <td>${t.member}</td>
 <td>${t.type}</td>
 <td>${Number(t.amount).toLocaleString()} KRW</td>
@@ -352,7 +359,8 @@ let tx=transactions.find(t=>t.id===id);
 memberSelect.value=tx.member;
 document.getElementById("typeSelect").value=tx.type;
 document.getElementById("amountInput").value=tx.amount;
-document.getElementById("dateInput").value=tx.date;
+document.getElementById("dateInput").value =
+tx.date.toDate().toISOString().split("T")[0];
 
 editingId=id;
 document.getElementById("saveBtn").innerText="Update";
@@ -420,31 +428,40 @@ db.collection("settings").doc("notice").set({text});
 function exportPDF(){
 
 const { jsPDF } = window.jspdf;
-let doc=new jsPDF();
-doc.text("Subham Cooperative Savings - Transactions",14,15);
+let doc = new jsPDF();
 
-let y=25;
+doc.setFontSize(14);
+doc.text("Subham Cooperative Savings - Transactions Report", 14, 15);
+
+let y = 25;
 doc.setFontSize(10);
 
-doc.text("Date",14,y);
-doc.text("Member",45,y);
-doc.text("Type",95,y);
-doc.text("Amount",150,y);
-y+=8;
+// Table Header
+doc.text("Date", 14, y);
+doc.text("Member", 45, y);
+doc.text("Type", 95, y);
+doc.text("Amount (KRW)", 150, y);
+y += 8;
 
-transactions.forEach(t=>{
-doc.text(t.date,14,y);
-doc.text(t.member,45,y);
-doc.text(t.type,95,y);
-doc.text(t.amount.toFixed(0),150,y);
-y+=8;
-if(y>280){
+// Export ONLY filtered data
+filteredTransactions.forEach(t => {
+
+let dateStr = t.date.toDate().toLocaleDateString();
+
+doc.text(dateStr, 14, y);
+doc.text(t.member, 45, y);
+doc.text(t.type, 95, y);
+doc.text(Number(t.amount).toLocaleString(), 150, y);
+
+y += 8;
+
+if(y > 280){
 doc.addPage();
-y=20;
+y = 20;
 }
 });
 
-doc.save("transactions.pdf");
+doc.save("Filtered_Transactions_Report.pdf");
 }
 
 </script>
