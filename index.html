@@ -126,12 +126,13 @@ Subham Savings Group
 
 <div class="container">
 
+<!-- DASHBOARD -->
 <div class="card">
-<h3>Dashboard</h3>
-<p>Total Savings: <b id="totalSavings">0</b> KRW</p>
-<p>Total Loan: <b id="totalLoan">0</b> KRW</p>
-<p>Money Available: <b id="moneyAvailable">0</b> KRW</p>
+<h3>📊 Group Dashboard</h3>
 <p>Total Capital of Group: <b id="totalCapital">0</b> KRW</p>
+<p>Total Savings: <b id="totalSavings">0</b> KRW</p>
+<p>Total Money Invested: <b id="totalInvested">0</b> KRW</p>
+<p>Money Available: <b id="moneyAvailable">0</b> KRW</p>
 </div>
 
 <div class="card">
@@ -139,18 +140,17 @@ Subham Savings Group
 <div id="members" class="member-grid"></div>
 </div>
 
+<!-- ADD TRANSACTION -->
 <div class="card">
-<h3>Add Transaction</h3>
-
+<h3>➕ Add Transaction</h3>
 <select id="memberSelect"></select>
 <select id="typeSelect">
 <option value="savings">Savings</option>
 <option value="loan">Loan</option>
-<option value="repayment">Repayment</option>
 </select>
 <input type="number" id="amountInput" placeholder="Amount">
+<input type="date" id="dateInput">
 <button onclick="addTransaction()">Add</button>
-
 </div>
 
 <div class="card">
