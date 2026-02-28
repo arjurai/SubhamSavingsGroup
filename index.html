@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html>
-<head> <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1e3c72"> <head>
+<head>
 <meta charset="UTF-8">
-<title>Subham Savings Group</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subham Cooperative Savings</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d47a1">
 
 <style>
 body{font-family:Arial;margin:0;background:#f4f6f9}
@@ -13,27 +15,10 @@ background:#0d47a1;
 color:white;
 padding:15px;
 display:flex;
-align-items:center;
 justify-content:space-between;
-}
-.logo{
-display:flex;
 align-items:center;
-gap:10px;
-font-size:20px;
-font-weight:bold;
-}
-.logo img{width:40px}
-#adminBadge{
-display:none;
-background:#ffcc00;
-color:black;
-padding:4px 8px;
-border-radius:6px;
-font-size:12px;
 }
 button{padding:6px 10px;border:none;border-radius:6px;cursor:pointer}
-.admin-only{display:none}
 .container{padding:15px}
 .card{
 background:white;
@@ -42,87 +27,36 @@ border-radius:8px;
 margin-bottom:15px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
-
-#adminBadge{
-display:none;
-background:#ffcc00;
-color:black;
-padding:4px 8px;
-border-radius:6px;
-font-size:12px;
-margin-left:10px;
-}
-
-#loginBtn,#logoutBtn{
-position:absolute;
-right:15px;
-top:15px;
-padding:5px 10px;
-border:none;
-border-radius:6px;
-cursor:pointer;
-}
-
-#loginBtn{ background:white; }
-#logoutBtn{ background:#ff4444; color:white; display:none; }
-
-.container{
-padding:15px;
-}
-
-.card{
-background:white;
-padding:15px;
-border-radius:8px;
-margin-bottom:15px;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
-}
-
 .member-grid{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
 gap:10px;
 }
-
 .member-card{
 background:#e3f2fd;
-padding:10px;
+padding:12px;
 border-radius:8px;
 }
-
-button{
-padding:6px 10px;
-border:none;
-border-radius:6px;
-cursor:pointer;
-}
-
-.admin-only{ display:none; }
-
-.green{color:green;}
-.red{color:red;}
-.blue{color:#1e88e5;}
-
-table{
-width:100%;
-border-collapse:collapse;
-}
-
-th,td{
-padding:8px;
-border-bottom:1px solid #ddd;
-text-align:left;
-}
+.green{color:green}
+.red{color:red}
+.blue{color:#1e88e5}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}
+.admin-only{display:none}
+textarea{width:100%;height:80px}
+select,input{margin:5px 0;padding:5px}
 </style>
 </head>
 
 <body>
 
 <header>
-Subham Savings Group
-<span id="adminBadge">ADMIN MODE</span>
+<h2>Subham Cooperative Savings</h2>
+<div>
+<span id="adminBadge" style="display:none;background:#ffcc00;color:black;padding:4px 8px;border-radius:6px">ADMIN</span>
 <button id="loginBtn" onclick="adminLogin()">Login</button>
-<button id="logoutBtn" onclick="adminLogout()">Logout</button>
+<button id="logoutBtn" onclick="adminLogout()" style="display:none;background:#ff4444;color:white">Logout</button>
+</div>
 </header>
 
 <div class="container">
@@ -130,12 +64,21 @@ Subham Savings Group
 <!-- DASHBOARD -->
 <div class="card">
 <h3>📊 Group Dashboard</h3>
-<p>Total Capital of Group: <b id="totalCapital">0</b> KRW</p>
 <p>Total Savings: <b id="totalSavings">0</b> KRW</p>
-<p>Total Money Invested: <b id="totalInvested">0</b> KRW</p>
+<p>Total Loan Given: <b id="totalLoan">0</b> KRW</p>
+<p>Total Interest Collected: <b id="totalInterest">0</b> KRW</p>
 <p>Money Available: <b id="moneyAvailable">0</b> KRW</p>
 </div>
 
+<!-- NOTICE BOARD -->
+<div class="card">
+<h3>📢 Notice Board</h3>
+<textarea id="noticeInput" class="admin-only"></textarea>
+<button onclick="saveNotice()" class="admin-only">Save Notice</button>
+<p id="noticeDisplay"></p>
+</div>
+
+<!-- MEMBERS -->
 <div class="card">
 <h3>Members</h3>
 <div id="members" class="member-grid"></div>
@@ -144,16 +87,43 @@ Subham Savings Group
 <!-- ADD TRANSACTION -->
 <div class="card">
 <h3>➕ Add Transaction</h3>
+
 <select id="memberSelect"></select>
+
 <select id="typeSelect">
 <option value="savings">Savings</option>
-<option value="loan">Loan</option>
+<option value="loan_given">Loan Given</option>
+<option value="loan_payment">Loan Payment</option>
+<option value="interest_payment">Interest Payment</option>
 </select>
+
 <input type="number" id="amountInput" placeholder="Amount">
 <input type="date" id="dateInput">
 <button onclick="addTransaction()">Add</button>
 </div>
 
+<!-- FILTER -->
+<div class="card">
+<h3>🔎 Filter Transactions</h3>
+
+<select id="filterMember">
+<option value="all">All Members</option>
+</select>
+
+<select id="quickRange">
+<option value="all">All Time</option>
+<option value="3">Last 3 Months</option>
+<option value="6">Last 6 Months</option>
+<option value="12">Last 1 Year</option>
+</select>
+
+<input type="date" id="fromDate">
+<input type="date" id="toDate">
+<button onclick="render()">Apply</button>
+<button onclick="exportPDF()">Export PDF</button>
+</div>
+
+<!-- TRANSACTIONS -->
 <div class="card">
 <h3>Transactions</h3>
 <table>
@@ -176,8 +146,10 @@ Subham Savings Group
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<script>
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyD8BSnJDY4ue-ifwK2G-so-3mWXr8OOepY",
   authDomain: "subhamsavingsgroup.firebaseapp.com",
@@ -188,73 +160,65 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const db=firebase.firestore();
+
+const INTEREST_RATE=0.01; // 1% per month
 
 const members=[
-"RAI ARJU",
-"SHERMA BHAKTI",
-"BUDHATHOKI SUKDEV",
-"SHAHI LAXMAN BAHADUR",
-"SHRESTHA TEKINDRA",
-"GHIMIRE SURESH",
-"TIWARI SURYA PARSAD",
-"TAMANG KESHAR",
-"RAI MANDIP",
-"MAGAR MIM DARLAMI"
+"RAI ARJU","SHERMA BHAKTI","BUDHATHOKI SUKDEV",
+"SHAHI LAXMAN BAHADUR","SHRESTHA TEKINDRA",
+"GHIMIRE SURESH","TIWARI SURYA PARSAD",
+"TAMANG KESHAR","RAI MANDIP","MAGAR MIM DARLAMI"
 ];
 
 let admin=false;
 let transactions=[];
 
 const memberSelect=document.getElementById("memberSelect");
+const filterMember=document.getElementById("filterMember");
+
 members.forEach(m=>{
-let option=document.createElement("option");
-option.value=m;
-option.text=m;
-memberSelect.appendChild(option);
+let o1=new Option(m,m);
+let o2=new Option(m,m);
+memberSelect.add(o1);
+filterMember.add(o2);
 });
+
+/* ================= ADMIN ================= */
 
 function adminLogin(){
 let pin=prompt("Enter Admin PIN");
 if(pin==="6356"){
 admin=true;
 document.getElementById("adminBadge").style.display="inline";
-document.getElementById("logoutBtn").style.display="inline";
 document.getElementById("loginBtn").style.display="none";
-document.querySelectorAll(".admin-only")
-.forEach(e=>e.style.display="table-cell");
-alert("Admin Logged In");
-}else{
-alert("Wrong PIN");
+document.getElementById("logoutBtn").style.display="inline";
+document.querySelectorAll(".admin-only").forEach(e=>e.style.display="table-cell");
 }
 }
 
 function adminLogout(){
 admin=false;
 document.getElementById("adminBadge").style.display="none";
-document.getElementById("logoutBtn").style.display="none";
 document.getElementById("loginBtn").style.display="inline";
-document.querySelectorAll(".admin-only")
-.forEach(e=>e.style.display="none");
+document.getElementById("logoutBtn").style.display="none";
+document.querySelectorAll(".admin-only").forEach(e=>e.style.display="none");
 }
+
+/* ================= TRANSACTION ================= */
 
 function addTransaction(){
 let member=memberSelect.value;
 let type=document.getElementById("typeSelect").value;
-let amount=parseInt(document.getElementById("amountInput").value);
+let amount=parseFloat(document.getElementById("amountInput").value);
+let date=document.getElementById("dateInput").value;
 
-if(!amount) return alert("Enter amount");
+if(!amount||!date) return alert("Enter all fields");
 
-db.collection("transactions").add({
-member,type,amount,
-date:new Date().toISOString()
-});
+db.collection("transactions").add({member,type,amount,date});
 }
 
-function deleteTx(id){
-if(!admin) return;
-db.collection("transactions").doc(id).delete();
-}
+/* ================= LOAD DATA ================= */
 
 db.collection("transactions")
 .orderBy("date","desc")
@@ -266,40 +230,80 @@ transactions.push({id:doc.id,...doc.data()});
 render();
 });
 
+/* ================= RENDER ================= */
+
 function render(){
 
 let table="";
 let totalSavings=0;
 let totalLoan=0;
+let totalInterest=0;
 
-transactions.forEach(t=>{
+let selectedMember=filterMember.value;
+let quick=document.getElementById("quickRange").value;
+let from=document.getElementById("fromDate").value;
+let to=document.getElementById("toDate").value;
+
+let filtered=transactions.filter(t=>{
+
+if(selectedMember!=="all" && t.member!==selectedMember)
+return false;
+
+let txDate=new Date(t.date);
+
+if(quick!=="all"){
+let past=new Date();
+past.setMonth(past.getMonth()-parseInt(quick));
+if(txDate<past) return false;
+}
+
+if(from && to){
+let diff=(new Date(to)-new Date(from))/(1000*60*60*24);
+if(diff>365) return alert("Max 1 year range");
+}
+
+if(from && txDate<new Date(from)) return false;
+if(to && txDate>new Date(to)) return false;
+
+return true;
+});
+
+filtered.forEach(t=>{
 
 if(t.type==="savings") totalSavings+=t.amount;
-if(t.type==="loan") totalLoan+=t.amount;
-if(t.type==="repayment") totalLoan-=t.amount;
+if(t.type==="loan_given") totalLoan+=t.amount;
+if(t.type==="loan_payment") totalLoan-=t.amount;
+if(t.type==="interest_payment") totalInterest+=t.amount;
 
 table+=`
 <tr>
-<td>${new Date(t.date).toLocaleDateString()}</td>
+<td>${t.date}</td>
 <td>${t.member}</td>
 <td>${t.type}</td>
-<td>${t.amount} KRW</td>
+<td>${t.amount.toFixed(0)} KRW</td>
 <td class="admin-only">
 <button onclick="deleteTx('${t.id}')">Delete</button>
 </td>
-</tr>
-`;
+</tr>`;
 });
 
 document.getElementById("transactionTable").innerHTML=table;
-
 document.getElementById("totalSavings").innerText=totalSavings;
 document.getElementById("totalLoan").innerText=totalLoan;
+document.getElementById("totalInterest").innerText=totalInterest;
 document.getElementById("moneyAvailable").innerText=totalSavings-totalLoan;
-document.getElementById("totalCapital").innerText=totalSavings;
 
 renderMembers();
 }
+
+/* ================= DELETE ================= */
+
+function deleteTx(id){
+if(!admin) return;
+db.collection("transactions").doc(id).delete();
+}
+
+/* ================= MEMBER CARDS ================= */
 
 function renderMembers(){
 
@@ -310,35 +314,84 @@ members.forEach(name=>{
 
 let savings=0;
 let loan=0;
+let interestPaid=0;
+let lastLoanDate=null;
 
 transactions.forEach(t=>{
 if(t.member===name){
 if(t.type==="savings") savings+=t.amount;
-if(t.type==="loan") loan+=t.amount;
-if(t.type==="repayment") loan-=t.amount;
+if(t.type==="loan_given"){ loan+=t.amount; lastLoanDate=t.date;}
+if(t.type==="loan_payment") loan-=t.amount;
+if(t.type==="interest_payment") interestPaid+=t.amount;
 }
 });
+
+let interestDue=0;
+
+if(loan>0 && lastLoanDate){
+let months=(new Date()-new Date(lastLoanDate))/(1000*60*60*24*30);
+interestDue=loan*INTEREST_RATE*months - interestPaid;
+if(interestDue<0) interestDue=0;
+}
 
 container.innerHTML+=`
 <div class="member-card">
 <h4>${name}</h4>
-<p>Savings: <span class="blue">${savings}</span></p>
-<p>Loan: <span class="red">${loan}</span></p>
-<p>Balance: <span class="green">${savings-loan}</span></p>
-</div>
-`;
+<p>Savings: <span class="blue">${savings.toFixed(0)}</span></p>
+<p>Loan Due: <span class="red">${loan.toFixed(0)}</span></p>
+<p>Interest Due: <span class="red">${interestDue.toFixed(0)}</span></p>
+<p>Net Balance: <span class="green">${(savings-loan).toFixed(0)}</span></p>
+</div>`;
 });
 }
 
-<script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js")
-      .then(reg => console.log("Service Worker Registered"))
-      .catch(err => console.log("Service Worker Failed", err));
-  });
-}
-</script>
+/* ================= NOTICE ================= */
 
+db.collection("settings").doc("notice")
+.onSnapshot(doc=>{
+if(doc.exists){
+document.getElementById("noticeDisplay").innerText=doc.data().text;
+document.getElementById("noticeInput").value=doc.data().text;
+}
+});
+
+function saveNotice(){
+let text=document.getElementById("noticeInput").value;
+db.collection("settings").doc("notice").set({text});
+}
+
+/* ================= PDF EXPORT ================= */
+
+function exportPDF(){
+
+const { jsPDF } = window.jspdf;
+let doc=new jsPDF();
+doc.text("Subham Cooperative Savings - Transactions",14,15);
+
+let y=25;
+doc.setFontSize(10);
+
+doc.text("Date",14,y);
+doc.text("Member",45,y);
+doc.text("Type",95,y);
+doc.text("Amount",150,y);
+y+=8;
+
+transactions.forEach(t=>{
+doc.text(t.date,14,y);
+doc.text(t.member,45,y);
+doc.text(t.type,95,y);
+doc.text(t.amount.toFixed(0),150,y);
+y+=8;
+if(y>280){
+doc.addPage();
+y=20;
+}
+});
+
+doc.save("transactions.pdf");
+}
+
+</script>
 </body>
 </html>
