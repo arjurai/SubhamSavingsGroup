@@ -189,7 +189,7 @@ filterMember.add(o2);
 
 function adminLogin(){
 let pin=prompt("Enter Admin PIN");
-if(pin==="6356"){
+if(pin==="63568881"){
 admin=true;
 document.getElementById("adminBadge").style.display="inline";
 document.getElementById("loginBtn").style.display="none";
@@ -257,63 +257,84 @@ render();
 
 function render(){
 
-let table="";
-let totalSavings=0;
-let totalLoan=0;
-let totalInterest=0;
+/* ================= STEP 1 — CALCULATE DASHBOARD TOTALS ================= */
 
-let selectedMember=filterMember.value;
-let quick=document.getElementById("quickRange").value;
-let from=document.getElementById("fromDate").value;
-let to=document.getElementById("toDate").value;
+let totalSavings = 0;
+let totalLoan = 0;
+let totalInterest = 0;
 
-let filtered=transactions.filter(t=>{
-
-if(selectedMember!=="all" && t.member!==selectedMember)
-return false;
-
-let txDate=new Date(t.date);
-
-if(quick!=="all"){
-let past=new Date();
-past.setMonth(past.getMonth()-parseInt(quick));
-if(txDate<past) return false;
-}
-
-
-if(from && txDate<new Date(from)) return false;
-if(to && txDate>new Date(to)) return false;
-
-return true;
+transactions.forEach(t=>{
+   if(t.type==="savings") totalSavings += t.amount;
+   if(t.type==="loan_given") totalLoan += t.amount;
+   if(t.type==="loan_payment") totalLoan -= t.amount;
+   if(t.type==="interest_payment") totalInterest += t.amount;
 });
+
+/* ================= STEP 2 — UPDATE DASHBOARD ================= */
+
+document.getElementById("totalSavings").innerText = totalSavings.toLocaleString();
+document.getElementById("totalLoan").innerText = totalLoan.toLocaleString();
+document.getElementById("totalInterest").innerText = totalInterest.toLocaleString();
+document.getElementById("moneyAvailable").innerText = (totalSavings - totalLoan).toLocaleString();
+
+
+/* ================= STEP 3 — APPLY FILTER FOR TABLE ONLY ================= */
+
+let selectedMember = document.getElementById("filterMember").value;
+let quick = document.getElementById("quickRange").value;
+let from = document.getElementById("fromDate").value;
+let to = document.getElementById("toDate").value;
+
+let filtered = transactions.filter(t => {
+
+   // Filter by member
+   if(selectedMember !== "all" && t.member !== selectedMember)
+      return false;
+
+   let txDate = new Date(t.date);
+
+   // Quick range filter (3 / 6 / 12 months)
+   if(quick !== "all"){
+      let past = new Date();
+      past.setMonth(past.getMonth() - parseInt(quick));
+      if(txDate < past) return false;
+   }
+
+   // Custom date filter
+   if(from && txDate < new Date(from)) return false;
+   if(to && txDate > new Date(to)) return false;
+
+   return true;
+});
+
+
+/* ================= STEP 4 — BUILD TRANSACTION TABLE ================= */
+
+let table = "";
 
 filtered.forEach(t=>{
 
-if(t.type==="savings") totalSavings+=t.amount;
-if(t.type==="loan_given") totalLoan+=t.amount;
-if(t.type==="loan_payment") totalLoan-=t.amount;
-if(t.type==="interest_payment") totalInterest+=t.amount;
-
-table+=`
+table += `
 <tr>
 <td>${t.date}</td>
 <td>${t.member}</td>
 <td>${t.type}</td>
-<td>${t.amount.toFixed(0)} KRW</td>
+<td>${Number(t.amount).toLocaleString()} KRW</td>
 <td class="admin-only">
 <button onclick="editTx('${t.id}')">Edit</button>
 <button onclick="deleteTx('${t.id}')">Delete</button>
 </td>
-</tr>`;
+</tr>
+`;
 });
 
-document.getElementById("transactionTable").innerHTML=table;
-document.getElementById("totalSavings").innerText=totalSavings;
-document.getElementById("totalLoan").innerText=totalLoan;
-document.getElementById("totalInterest").innerText=totalInterest;
-document.getElementById("moneyAvailable").innerText=totalSavings-totalLoan;
+document.getElementById("transactionTable").innerHTML = table;
+
+
+/* ================= STEP 5 — UPDATE MEMBER CARDS ================= */
 
 renderMembers();
+
 }
 
 /* ================= DELETE ================= */
