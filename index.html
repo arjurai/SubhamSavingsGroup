@@ -69,6 +69,7 @@ select,input{margin:5px 0;padding:5px}
 
 <div class="container">
 
+
 <!-- DASHBOARD -->
 <div class="card">
 <h3>📊 Group Dashboard</h3>
@@ -545,7 +546,9 @@ y += 8;
 // Export ONLY filtered data
 filteredTransactions.forEach(t => {
 
-let dateStr = t.date.toDate().toLocaleDateString();
+let dateStr = (t.date && typeof t.date.toDate === "function")
+  ? t.date.toDate().toLocaleDateString()
+  : new Date(t.date).toLocaleDateString();
 
 doc.text(dateStr, 14, y);
 doc.text(t.member, 45, y);
