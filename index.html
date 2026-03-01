@@ -585,6 +585,38 @@ body{
     opacity:0;
   }
 }
+/* ===== TOP RUNNING MOTTO ===== */
+
+.top-motto{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  background:linear-gradient(90deg,#1b4332,#2d6a4f);
+  color:white;
+  overflow:hidden;
+  height:30px;
+  display:flex;
+  align-items:center;
+  z-index:2000;
+}
+
+.motto-text{
+  white-space:nowrap;
+  position:absolute;
+  animation:slideMotto 15s linear infinite;
+  font-size:14px;
+  font-style:italic;
+}
+
+/* Animation */
+@keyframes slideMotto{
+  0%{ transform:translateX(100%); }
+  100%{ transform:translateX(-100%); }
+}
+.glass-header{
+  margin-top:30px;   /* same as motto height */
+}
 </style>
 </head>
 
@@ -599,12 +631,12 @@ body{
     <button onclick="login()" class="login-btn">Login</button>
   </div>
 </div>
+<div class="top-motto">
+      <p class="motto">विश्वास, अनुशासन र बचत - हाम्रो पहिचान।</p>
 <header class="glass-header">
   <div class="header-left">
     <img src="icon-512.png" class="logo">
     <div class="title-box">
-    <div class="motto-wrapper">
-      <p class="motto">विश्वास, अनुशासन र बचत - हाम्रो पहिचान।</p>
       <h1>Subham</h1>
       <p>Cooperative Savings</p>
     </div>
