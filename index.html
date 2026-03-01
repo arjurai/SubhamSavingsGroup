@@ -542,47 +542,6 @@ body{
   padding:15px;
   box-shadow:0 5px 20px rgba(0,0,0,0.1);
 }
-  // ===== Savings vs Loans Chart =====
-
-let financeChart;
-
-function updateChart(savings, loans){
-
-  const ctx = document.getElementById("financeChart").getContext("2d");
-
-  if(financeChart){
-    financeChart.destroy();
-  }
-  financeChart = new Chart(ctx,{
-    type:"bar",
-    data:{
-      labels:["Savings","Loans"],
-      datasets:[{
-        label:"Amount (KRW)",
-        data:[savings, loans],
-        backgroundColor:[
-          "rgba(0,200,83,0.7)",
-          "rgba(213,0,0,0.7)"
-        ],
-        borderRadius:8
-      }]
-    },
-    options:{
-      responsive:true,
-      plugins:{
-        legend:{display:false}
-      },
-      animation:{
-        duration:1500
-      },
-      scales:{
-        y:{
-          beginAtZero:true
-        }
-      }
-    }
-  });
-}
 </style>
 </head>
 
@@ -1250,6 +1209,47 @@ function animateParticles(){
 }
 
 animateParticles();
+ // ===== Savings vs Loans Chart =====
+
+let financeChart;
+
+function updateChart(savings, loans){
+
+  const ctx = document.getElementById("financeChart").getContext("2d");
+
+  if(financeChart){
+    financeChart.destroy();
+  }
+  financeChart = new Chart(ctx,{
+    type:"bar",
+    data:{
+      labels:["Savings","Loans"],
+      datasets:[{
+        label:"Amount (KRW)",
+        data:[savings, loans],
+        backgroundColor:[
+          "rgba(0,200,83,0.7)",
+          "rgba(213,0,0,0.7)"
+        ],
+        borderRadius:8
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false}
+      },
+      animation:{
+        duration:1500
+      },
+      scales:{
+        y:{
+          beginAtZero:true
+        }
+      }
+    }
+  });
+}
 </script>
 </body>
 </html>
