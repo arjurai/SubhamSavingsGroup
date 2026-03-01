@@ -628,6 +628,9 @@ function updateChart(savings, loans){
 <p>Total Interest Collected: <b id="totalInterest" class="money-gold">0</b> KRW</p>
 <p>Money Available: <b id="moneyAvailable" class="money-blue">0</b> KRW</p>
 </div>
+<div class="chart-container">
+   <canvas id="financeChart"></canvas>
+</div>
 
 <!-- NOTICE BOARD -->
 <div class="card noticeboard">
@@ -1107,9 +1110,6 @@ container.innerHTML += `
 <p>Interest Due: <span class="red">${interestDue.toFixed(0)}</span></p>
 <p>Net Balance: <span class="green">${(savings-loan).toFixed(0)}</span></p>
 </div>`;
-<div class="chart-container">
-   <canvas id="financeChart"></canvas>
-</div>
 });
 }
 
