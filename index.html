@@ -330,8 +330,7 @@ if(editingId){
     editingId = null;
     document.getElementById("saveBtn").innerText = "Add";
     showStatus("Transaction Updated Successfully ✔", "green");
-    document.getElementById("amountInput").value = "";
-    document.getElementById("dateInput").value = "";
+    document.getElementById("amountInput").value = ""; 
   });
 
 } else {
@@ -344,7 +343,6 @@ if(editingId){
   }).then(()=>{
     showStatus("Transaction Added Successfully ✔", "green");
     document.getElementById("amountInput").value = "";
-    document.getElementById("dateInput").value = "";
   });
 
 }
