@@ -542,7 +542,7 @@ body{
   padding:15px;
   box-shadow:0 5px 20px rgba(0,0,0,0.1);
 }
-// ===== Savings vs Loans Chart =====
+  // ===== Savings vs Loans Chart =====
 
 let financeChart;
 
@@ -553,7 +553,6 @@ function updateChart(savings, loans){
   if(financeChart){
     financeChart.destroy();
   }
-
   financeChart = new Chart(ctx,{
     type:"bar",
     data:{
