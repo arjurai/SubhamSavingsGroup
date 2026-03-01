@@ -513,6 +513,77 @@ body{
   height:100%;
   z-index:-1;
 }
+/* ===== Motto Styling ===== */
+
+.motto{
+  text-align:center;
+  font-size:14px;
+  font-weight:600;
+  color:#0d47a1;
+  padding:8px;
+  background:linear-gradient(to right,#e3f2fd,#ffffff,#e3f2fd);
+  letter-spacing:1px;
+  animation:fadeIn 2s ease-in-out;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(-10px);}
+  to{opacity:1; transform:translateY(0);}
+}
+  /* ===== Chart Styling ===== */
+
+.chart-container{
+  width:95%;
+  max-width:500px;
+  margin:20px auto;
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(10px);
+  border-radius:15px;
+  padding:15px;
+  box-shadow:0 5px 20px rgba(0,0,0,0.1);
+}
+// ===== Savings vs Loans Chart =====
+
+let financeChart;
+
+function updateChart(savings, loans){
+
+  const ctx = document.getElementById("financeChart").getContext("2d");
+
+  if(financeChart){
+    financeChart.destroy();
+  }
+
+  financeChart = new Chart(ctx,{
+    type:"bar",
+    data:{
+      labels:["Savings","Loans"],
+      datasets:[{
+        label:"Amount (KRW)",
+        data:[savings, loans],
+        backgroundColor:[
+          "rgba(0,200,83,0.7)",
+          "rgba(213,0,0,0.7)"
+        ],
+        borderRadius:8
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false}
+      },
+      animation:{
+        duration:1500
+      },
+      scales:{
+        y:{
+          beginAtZero:true
+        }
+      }
+    }
+  });
+}
 </style>
 </head>
 
@@ -527,7 +598,7 @@ body{
     <button onclick="login()" class="login-btn">Login</button>
   </div>
 </div>
-
+<div class="motto">आजको अनुशासन, भोलिको समृद्धि।</div>
 <header class="glass-header">
   <div class="header-left">
     <img src="icon-512.png" class="logo">
@@ -634,7 +705,8 @@ body{
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
 <!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -822,7 +894,7 @@ animateCounter("totalSavings", totalSavings);
 animateCounter("totalLoan", totalLoan);
 animateCounter("totalInterest", totalInterest);
 animateCounter("moneyAvailable", totalSavings - totalLoan);
-
+updateChart(totalSavings, totalLoan);
 
 /* ================= STEP 3 — APPLY FILTER FOR TABLE ONLY ================= */
 
@@ -1035,7 +1107,9 @@ container.innerHTML += `
 <p>Interest Due: <span class="red">${interestDue.toFixed(0)}</span></p>
 <p>Net Balance: <span class="green">${(savings-loan).toFixed(0)}</span></p>
 </div>`;
-
+<div class="chart-container">
+   <canvas id="financeChart"></canvas>
+</div>
 });
 }
 
