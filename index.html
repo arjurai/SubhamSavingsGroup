@@ -104,7 +104,6 @@ select,input{margin:5px 0;padding:5px}
 <option value="loan_given">Loan Given</option>
 <option value="loan_payment">Loan Payment</option>
 <option value="interest_payment">Interest Payment</option>
-<option value="interest_added">Interest Added</option>
 </select>
 
 <input type="number" id="amountInput" placeholder="Amount">
@@ -484,22 +483,62 @@ members.forEach(name=>{
 let savings = 0;
 let loan = 0;
 let interestPaid = 0;
-let interestAdded = 0;
+let loanStartDate = null;
 
 transactions.forEach(t=>{
+
   if(t.member === name){
 
     if(t.type==="savings") savings += t.amount;
-    if(t.type==="loan_given") loan += t.amount;
-    if(t.type==="loan_payment") loan -= t.amount;
-    if(t.type==="interest_payment") interestPaid += t.amount;
-    if(t.type==="interest_added") interestAdded += t.amount;
+
+    if(t.type==="loan_given"){
+      loan += t.amount;
+
+      let d = (t.date && typeof t.date.toDate==="function")
+        ? t.date.toDate()
+        : new Date(t.date);
+
+      if(!loanStartDate || d < loanStartDate){
+        loanStartDate = d;
+      }
+    }
+
+    if(t.type==="loan_payment"){
+      loan -= t.amount;
+
+      if(loan <= 0){
+        loan = 0;
+        loanStartDate = null;
+      }
+    }
+
+    if(t.type==="interest_payment"){
+      interestPaid += t.amount;
+    }
 
   }
+
 });
 
-let interestDue = interestAdded - interestPaid;
-if(interestDue < 0) interestDue = 0;
+let interestDue = 0;
+
+if(loan > 0 && loanStartDate){
+
+  let today = new Date();
+
+  let months =
+    (today.getFullYear() - loanStartDate.getFullYear()) * 12 +
+    (today.getMonth() - loanStartDate.getMonth());
+
+  if(months < 0) months = 0;
+
+  let totalInterest = loan * INTEREST_RATE * months;
+
+  interestDue = totalInterest - interestPaid;
+
+  if(interestDue < 0) interestDue = 0;
+
+}
 
 container.innerHTML += `
 <div class="member-card">
@@ -509,6 +548,7 @@ container.innerHTML += `
 <p>Interest Due: <span class="red">${interestDue.toFixed(0)}</span></p>
 <p>Net Balance: <span class="green">${(savings-loan).toFixed(0)}</span></p>
 </div>`;
+
 });
 }
 
