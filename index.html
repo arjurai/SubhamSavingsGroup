@@ -224,6 +224,17 @@ const members=[
 let transactions=[];
 let editingId=null;
 let filteredTransactions = [];
+/* ================= LOAD DATA ================= */
+
+db.collection("transactions")
+.orderBy("date","desc")
+.onSnapshot(snapshot=>{
+transactions=[];
+snapshot.forEach(doc=>{
+transactions.push({id:doc.id,...doc.data()});
+});
+render();
+});
 
 const memberSelect=document.getElementById("memberSelect");
 const filterMember=document.getElementById("filterMember");
@@ -300,17 +311,7 @@ if(editingId){
    document.getElementById("amountInput").value = "";
    document.getElementById("dateInput").value = "";
 });
-/* ================= LOAD DATA ================= */
-
-db.collection("transactions")
-.orderBy("date","desc")
-.onSnapshot(snapshot=>{
-transactions=[];
-snapshot.forEach(doc=>{
-transactions.push({id:doc.id,...doc.data()});
-});
-render();
-});
+}
 
 /* ================= RENDER ================= */
 
