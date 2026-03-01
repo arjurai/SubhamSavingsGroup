@@ -104,6 +104,7 @@ select,input{margin:5px 0;padding:5px}
 <option value="loan_given">Loan Given</option>
 <option value="loan_payment">Loan Payment</option>
 <option value="interest_payment">Interest Payment</option>
+<option value="interest_added">Interest Added</option>
 </select>
 
 <input type="number" id="amountInput" placeholder="Amount">
@@ -286,12 +287,75 @@ if(!amount || !date) return alert("Enter all fields");
 
 if(editingId){
 
-  db.collection("transactions").doc(editingId).update({
+  else {
+
+  let txDate = new Date(date);
+
+  db.collection("transactions").add({
     member,
     type,
     amount,
-    date: firebase.firestore.Timestamp.fromDate(new Date(date))
-  }).then(() => {
+    date: firebase.firestore.Timestamp.fromDate(txDate)
+  }).then(async () => {
+
+    // If loan payment → calculate interest
+    if(type === "loan_payment"){
+
+      // Get member loan history
+      let memberTx = transactions
+        .filter(t => t.member === member)
+        .sort((a,b)=>{
+          let d1 = (a.date && typeof a.date.toDate==="function") ? a.date.toDate() : new Date(a.date);
+          let d2 = (b.date && typeof b.date.toDate==="function") ? b.date.toDate() : new Date(b.date);
+          return d1 - d2;
+        });
+
+      let activeLoan = 0;
+      let lastLoanDate = null;
+
+      memberTx.forEach(t=>{
+        if(t.type==="loan_given"){
+          activeLoan += t.amount;
+          lastLoanDate = (t.date && typeof t.date.toDate==="function")
+            ? t.date.toDate()
+            : new Date(t.date);
+        }
+        if(t.type==="loan_payment"){
+          activeLoan -= t.amount;
+        }
+      });
+
+      if(lastLoanDate){
+
+        let now = txDate;
+
+        let yearsDiff = now.getFullYear() - lastLoanDate.getFullYear();
+        let monthsDiff = now.getMonth() - lastLoanDate.getMonth();
+        let totalMonths = yearsDiff * 12 + monthsDiff;
+
+        let dayDiff = now.getDate() - lastLoanDate.getDate();
+
+        if(totalMonths === 0) totalMonths = 1;
+        if(dayDiff > 15) totalMonths += 1;
+
+        let interestAmount = activeLoan * INTEREST_RATE * totalMonths;
+
+        if(interestAmount > 0){
+          await db.collection("transactions").add({
+            member,
+            type: "interest_added",
+            amount: interestAmount,
+            date: firebase.firestore.Timestamp.fromDate(txDate)
+          });
+        }
+      }
+    }
+
+    showStatus("Transaction Added Successfully ✔", "green");
+    document.getElementById("amountInput").value = "";
+    document.getElementById("dateInput").value = "";
+  });
+}.then(() => {
    editingId = null;
    document.getElementById("saveBtn").innerText = "Add";
    showStatus("Transaction Updated Successfully ✔", "green");
@@ -489,39 +553,17 @@ if(t.type==="interest_payment") interestPaid+=t.amount;
 }
 });
 
-let interestDue = 0;
+let interestAdded = 0;
 
-if (loan > 0 && lastLoanDate) {
+transactions.forEach(t=>{
+  if(t.member===name){
+    if(t.type==="interest_added") interestAdded += t.amount;
+    if(t.type==="interest_payment") interestPaid += t.amount;
+  }
+});
 
-    let now = new Date();
-
-    // Calculate total months difference
-    let yearsDiff = now.getFullYear() - lastLoanDate.getFullYear();
-    let monthsDiff = now.getMonth() - lastLoanDate.getMonth();
-    let totalMonths = yearsDiff * 12 + monthsDiff;
-
-    let dayDiff = now.getDate() - lastLoanDate.getDate();
-
-    // First month rule: minimum 1 month
-    if (totalMonths === 0) {
-        totalMonths = 1;
-    }
-
-    // Grace rule after first month
-    if (totalMonths >= 1) {
-        if (dayDiff > 15) {
-            totalMonths += 1;
-        }
-    }
-
-    let totalInterest = loan * INTEREST_RATE * totalMonths;
-interestDue = totalInterest - interestPaid;
-
-if (interestDue < 0) interestDue = 0;
-    interestDue = totalInterest - interestPaid;
-
-    if (interestDue < 0) interestDue = 0;
-}
+let interestDue = interestAdded - interestPaid;
+if(interestDue < 0) interestDue = 0;}
 
 container.innerHTML+=`
 <div class="member-card">
