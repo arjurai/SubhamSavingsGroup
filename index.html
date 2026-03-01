@@ -514,26 +514,10 @@ if (loan > 0 && lastLoanDate) {
         }
     }
 
-    let totalInterest = 0;
+    let totalInterest = loan * INTEREST_RATE * totalMonths;
+interestDue = totalInterest - interestPaid;
 
-let activeLoan = 0;
-
-transactions
-  .filter(t => t.memberId === m.id)
-  .sort((a,b)=> new Date(a.date) - new Date(b.date))
-  .forEach(t => {
-
-      if (t.type === "loan_given") {
-          activeLoan += t.amount;
-      }
-
-      if (t.type === "loan_paid") {
-          activeLoan -= t.amount;
-          if (activeLoan < 0) activeLoan = 0;
-      }
-  });
-
-totalInterest = activeLoan * INTEREST_RATE * totalMonths;
+if (interestDue < 0) interestDue = 0;
     interestDue = totalInterest - interestPaid;
 
     if (interestDue < 0) interestDue = 0;
