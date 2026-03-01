@@ -73,8 +73,8 @@ select,input{margin:5px 0;padding:5px}
 <!-- NOTICE BOARD -->
 <div class="card">
 <h3>📢 Notice Board</h3>
-<textarea id="noticeInput" class="admin-only"></textarea>
-<button onclick="saveNotice()" class="admin-only">Save Notice</button>
+<textarea id="noticeInput" style="display:none;"></textarea>
+<button onclick="saveNotice()" id="noticeBtn" style="display:none;">Save Notice</button>
 <p id="noticeDisplay"></p>
 </div>
 
@@ -192,6 +192,9 @@ function adminLogin(){
 let pin=prompt("Enter Admin PIN");
 if(pin==="6356"){
 admin=true;
+document.getElementById("noticeInput").style.display = "block";
+document.getElementById("noticeBtn").style.display = "inline-block";
+  
 document.getElementById("adminBadge").style.display="inline";
 document.getElementById("loginBtn").style.display="none";
 document.getElementById("logoutBtn").style.display="inline";
@@ -207,6 +210,8 @@ document.querySelectorAll(".admin-only").forEach(e=>{
 
 function adminLogout(){
 admin=false;
+document.getElementById("noticeInput").style.display = "none";
+document.getElementById("noticeBtn").style.display = "none";
 document.getElementById("adminBadge").style.display="none";
 document.getElementById("loginBtn").style.display="inline";
 document.getElementById("logoutBtn").style.display="none";
@@ -457,6 +462,10 @@ document.getElementById("noticeInput").value=doc.data().text;
 });
 
 function saveNotice(){
+if(!admin){
+  alert("Only Admin Allowed");
+  return;
+}
 let text=document.getElementById("noticeInput").value;
 db.collection("settings").doc("notice").set({text});
 }
