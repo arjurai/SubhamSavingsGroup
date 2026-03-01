@@ -462,12 +462,25 @@ document.getElementById("noticeInput").value=doc.data().text;
 });
 
 function saveNotice(){
+
 if(!admin){
   alert("Only Admin Allowed");
   return;
 }
-let text=document.getElementById("noticeInput").value;
-db.collection("settings").doc("notice").set({text});
+
+let text = document.getElementById("noticeInput").value;
+
+db.collection("settings").doc("notice").set({ text })
+
+.then(() => {
+   alert("Notice Saved Successfully");
+})
+
+.catch((error) => {
+   console.error("Notice Save Error:", error);
+   alert("Error saving notice: " + error.message);
+});
+
 }
 
 /* ================= PDF EXPORT ================= */
