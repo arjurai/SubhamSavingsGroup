@@ -283,98 +283,41 @@ let type = document.getElementById("typeSelect").value;
 let amount = parseFloat(document.getElementById("amountInput").value);
 let date = document.getElementById("dateInput").value;
 
-if(!amount || !date) return alert("Enter all fields");
+if(!amount || !date){
+  alert("Enter all fields");
+  return;
+}
+
+let txDate = new Date(date);
 
 if(editingId){
 
-  {
+  db.collection("transactions").doc(editingId).update({
+    member,
+    type,
+    amount,
+    date: firebase.firestore.Timestamp.fromDate(txDate)
+  }).then(()=>{
+    editingId = null;
+    document.getElementById("saveBtn").innerText = "Add";
+    showStatus("Transaction Updated Successfully ✔", "green");
+    document.getElementById("amountInput").value = "";
+    document.getElementById("dateInput").value = "";
+  });
 
-  let txDate = new Date(date);
+} else {
 
   db.collection("transactions").add({
     member,
     type,
     amount,
     date: firebase.firestore.Timestamp.fromDate(txDate)
-  }).then(async () => {
-
-    // If loan payment → calculate interest
-    if(type === "loan_payment"){
-
-      // Get member loan history
-      let memberTx = transactions
-        .filter(t => t.member === member)
-        .sort((a,b)=>{
-          let d1 = (a.date && typeof a.date.toDate==="function") ? a.date.toDate() : new Date(a.date);
-          let d2 = (b.date && typeof b.date.toDate==="function") ? b.date.toDate() : new Date(b.date);
-          return d1 - d2;
-        });
-
-      let activeLoan = 0;
-      let lastLoanDate = null;
-
-      memberTx.forEach(t=>{
-        if(t.type==="loan_given"){
-          activeLoan += t.amount;
-          lastLoanDate = (t.date && typeof t.date.toDate==="function")
-            ? t.date.toDate()
-            : new Date(t.date);
-        }
-        if(t.type==="loan_payment"){
-          activeLoan -= t.amount;
-        }
-      });
-
-      if(lastLoanDate){
-
-        let now = txDate;
-
-        let yearsDiff = now.getFullYear() - lastLoanDate.getFullYear();
-        let monthsDiff = now.getMonth() - lastLoanDate.getMonth();
-        let totalMonths = yearsDiff * 12 + monthsDiff;
-
-        let dayDiff = now.getDate() - lastLoanDate.getDate();
-
-        if(totalMonths === 0) totalMonths = 1;
-        if(dayDiff > 15) totalMonths += 1;
-
-        let interestAmount = activeLoan * INTEREST_RATE * totalMonths;
-
-        if(interestAmount > 0){
-          await db.collection("transactions").add({
-            member,
-            type: "interest_added",
-            amount: interestAmount,
-            date: firebase.firestore.Timestamp.fromDate(txDate)
-          });
-        }
-      }
-    }
-
+  }).then(()=>{
     showStatus("Transaction Added Successfully ✔", "green");
     document.getElementById("amountInput").value = "";
     document.getElementById("dateInput").value = "";
   });
-}.then(() => {
-   editingId = null;
-   document.getElementById("saveBtn").innerText = "Add";
-   showStatus("Transaction Updated Successfully ✔", "green");
-   document.getElementById("amountInput").value = "";
-   document.getElementById("dateInput").value = "";
-});
-} else {
 
-  db.collection("transactions").add({
-  member,
-  type,
-  amount,
-  date: firebase.firestore.Timestamp.fromDate(new Date(date))
-})
-.then(() => {
-   showStatus("Transaction Added Successfully ✔", "green");
-   document.getElementById("amountInput").value = "";
-   document.getElementById("dateInput").value = "";
-});
 }
 }
 
