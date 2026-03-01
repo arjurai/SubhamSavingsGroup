@@ -296,16 +296,179 @@ text-align:center;
   transition: all 0.3s ease;
 }
 
+.card{
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
 .card:hover{
   transform: translateY(-5px);
   box-shadow:0 10px 25px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+/* ===== Floating Animated Background ===== */
+
+body{
+  background: linear-gradient(-45deg, #e3f2fd, #bbdefb, #e1f5fe, #f0f8ff);
+  background-size: 400% 400%;
+  animation: gradientMove 15s ease infinite;
+}
+
+@keyframes gradientMove{
+  0%{ background-position: 0% 50%; }
+  50%{ background-position: 100% 50%; }
+  100%{ background-position: 0% 50%; }
+}
+/* ===== Mobile Improvements ===== */
+
+@media(max-width:600px){
+
+  .glass-header{
+    height:85px;
+    padding:0 15px;
+  }
+
+  .title-box h1{
+    font-size:20px;
+  }
+
+  .title-box p{
+    font-size:13px;
+  }
+
+  .card{
+    padding:12px;
+  }
+
+  table{
+    font-size:12px;
+  }
+
+  th,td{
+    padding:5px;
+  }
+
+  button{
+    font-size:12px;
+    padding:5px 8px;
+  }
+}
+/* ===== Mobile Improvements ===== */
+
+@media(max-width:600px){
+   ...
+}
+
+/* ===== Premium Banking UI Polish ===== */
+
+.card{
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(6px);
+  border-radius:16px;
+}
+
+button{
+  transition: all 0.25s ease;
+}
+
+button:hover{
+  transform: translateY(-2px);
+  box-shadow:0 5px 15px rgba(0,0,0,0.2);
+}
+.card{
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(6px);
+  border-radius:16px;
+}
+/* ===== Glass Login Popup ===== */
+
+.login-box{
+  position:relative;
+  width:320px;
+  padding:25px;
+  border-radius:18px;
+  background:rgba(255,255,255,0.15);
+  backdrop-filter:blur(20px);
+  box-shadow:0 10px 40px rgba(0,0,0,0.4);
+  color:white;
+  animation: popupFade 0.3s ease;
+}
+
+.login-box input{
+  padding:8px;
+  border-radius:8px;
+  border:none;
+}
+
+.login-box h3{
+  margin-top:0;
+}
+
+.close-btn{
+  position:absolute;
+  top:10px;
+  right:12px;
+  background:transparent;
+  border:none;
+  font-size:18px;
+  cursor:pointer;
+  color:white;
+}
+
+.close-btn:hover{
+  transform:scale(1.2);
+}
+
+/* Popup animation */
+@keyframes popupFade{
+  from{opacity:0;transform:scale(0.9);}
+  to{opacity:1;transform:scale(1);}
+}
+/* ===== Page Fade In ===== */
+
+body{
+  opacity:0;
+  animation:fadePage 0.8s ease forwards;
+}
+
+@keyframes fadePage{
+  to{opacity:1;}
+}
+/* ===== Shimmer Loading Effect ===== */
+
+.shimmer{
+  position:relative;
+  overflow:hidden;
+}
+
+.shimmer::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:-150%;
+  width:50%;
+  height:100%;
+  background:linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,0.6),
+    transparent
+  );
+  animation:shimmerMove 1.5s infinite;
+}
+
+@keyframes shimmerMove{
+  0%{left:-150%;}
+  100%{left:150%;}
 }
 </style>
 </head>
 
 <body>
-  <div id="loginModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);justify-content:center;align-items:center;">
-  <div style="background:white;padding:20px;border-radius:8px;width:300px;">
+  <div id="loginModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:9999;">
+ <div class="login-box">
+  <button class="close-btn" onclick="closeLogin()">✖</button>
     <h3>Admin Login</h3>
     <input type="email" id="email" placeholder="Email" style="width:100%;margin-bottom:10px;">
     <input type="password" id="password" placeholder="Password" style="width:100%;margin-bottom:10px;">
@@ -335,7 +498,7 @@ text-align:center;
 <div id="statusMessage"></div>
 
 <!-- DASHBOARD -->
-<div class="card">
+<div class="card shimmer">
 <h3>📊 Group Dashboard</h3>
 <p>Total Savings: <b id="totalSavings">0</b> KRW</p>
 <p>Total Loan Given: <b id="totalLoan">0</b> KRW</p>
@@ -601,10 +764,10 @@ transactions.forEach(t=>{
 
 /* ================= STEP 2 — UPDATE DASHBOARD ================= */
 
-document.getElementById("totalSavings").innerText = totalSavings.toLocaleString();
-document.getElementById("totalLoan").innerText = totalLoan.toLocaleString();
-document.getElementById("totalInterest").innerText = totalInterest.toLocaleString();
-document.getElementById("moneyAvailable").innerText = (totalSavings - totalLoan).toLocaleString();
+animateCounter("totalSavings", totalSavings);
+animateCounter("totalLoan", totalLoan);
+animateCounter("totalInterest", totalInterest);
+animateCounter("moneyAvailable", totalSavings - totalLoan);
 
 
 /* ================= STEP 3 — APPLY FILTER FOR TABLE ONLY ================= */
@@ -896,7 +1059,29 @@ y = 20;
 
 doc.save("Filtered_Transactions_Report.pdf");
 }
+/* ===== Animated Counter ===== */
+function animateCounter(id, target){
 
+  let element = document.getElementById(id);
+  let start = 0;
+  let duration = 800;
+  let stepTime = 15;
+  let increment = target / (duration / stepTime);
+
+  let counter = setInterval(() => {
+    start += increment;
+
+    if(start >= target){
+      start = target;
+      clearInterval(counter);
+    }
+
+    element.innerText = Math.floor(start).toLocaleString();
+  }, stepTime);
+}
+function closeLogin(){
+  document.getElementById("loginModal").style.display="none";
+}
 </script>
 </body>
 </html>
