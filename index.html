@@ -65,6 +65,48 @@ box-shadow:0 4px 12px rgba(0,0,0,0.3);
 min-width:250px;
 text-align:center;
 }
+#loginOverlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.4);
+backdrop-filter:blur(6px);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:4000;
+}
+
+#loginBox{
+background:white;
+padding:40px;
+border-radius:12px;
+width:300px;
+text-align:center;
+box-shadow:0 10px 30px rgba(0,0,0,0.3);
+}
+
+#loginBox input{
+width:100%;
+padding:10px;
+margin:10px 0;
+}
+
+#loginBox button{
+padding:10px 20px;
+background:#0d47a1;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+#loginError{
+color:red;
+font-size:14px;
+}
 </style>
 </head>
 
@@ -90,6 +132,15 @@ text-align:center;
 <div class="container">
 <div id="statusMessage"></div>
 
+<div id="loginOverlay">
+  <div id="loginBox">
+    <h2>Member Login</h2>
+    <input type="text" id="memberId" placeholder="Member ID"><br>
+    <input type="password" id="memberPassword" placeholder="Password"><br>
+    <button onclick="login()">Login</button>
+    <p id="loginError"></p>
+  </div>
+</div>
 <!-- DASHBOARD -->
 <div class="card">
 <h3>📊 Group Dashboard</h3>
@@ -653,6 +704,33 @@ y = 20;
 });
 
 doc.save("Filtered_Transactions_Report.pdf");
+}
+function login(){
+
+  const id = document.getElementById("memberId").value.trim();
+  const pass = document.getElementById("memberPassword").value.trim();
+  const error = document.getElementById("loginError");
+
+  // SIMPLE DEMO LOGIN (you can change IDs)
+  const members = {
+    "member1":"1234",
+    "member2":"1234",
+    "admin":"admin123"
+  };
+
+  if(members[id] && members[id] === pass){
+      document.getElementById("loginOverlay").style.display = "none";
+      sessionStorage.setItem("loggedIn", "true");
+  }else{
+      error.innerText = "Invalid ID or Password";
+  }
+}
+window.onload = function(){
+
+  if(sessionStorage.getItem("loggedIn") !== "true"){
+      document.getElementById("loginOverlay").style.display = "flex";
+  }
+
 }
 
 </script>
