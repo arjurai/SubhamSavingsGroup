@@ -49,13 +49,21 @@ select,input{margin:5px 0;padding:5px}
 </head>
 
 <body>
+  <div id="loginModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);justify-content:center;align-items:center;">
+  <div style="background:white;padding:20px;border-radius:8px;width:300px;">
+    <h3>Admin Login</h3>
+    <input type="email" id="email" placeholder="Email" style="width:100%;margin-bottom:10px;">
+    <input type="password" id="password" placeholder="Password" style="width:100%;margin-bottom:10px;">
+    <button onclick="login()" style="width:100%;">Login</button>
+  </div>
+</div>
 
 <header>
 <h2>Subham Cooperative Savings</h2>
 <div>
 <span id="adminBadge" style="display:none;background:#ffcc00;color:black;padding:4px 8px;border-radius:6px">ADMIN</span>
-<button id="loginBtn" onclick="adminLogin()">Login</button>
-<button id="logoutBtn" onclick="adminLogout()" style="display:none;background:#ff4444;color:white">Logout</button>
+<button id="loginBtn" onclick="showLogin()">Login</button>
+<button id="logoutBtn" onclick="logout()" style="display:none;background:#ff4444;color:white">Logout</button>
 </div>
 </header>
 
@@ -145,7 +153,8 @@ select,input{margin:5px 0;padding:5px}
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  
 <!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -161,6 +170,46 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+const auth = firebase.auth();
+let admin = false;
+auth.onAuthStateChanged(user => {
+
+if(user){
+
+  admin = true;   // THIS IS THE IMPORTANT LINE
+
+  document.getElementById("adminBadge").style.display="inline";
+  document.getElementById("loginBtn").style.display="none";
+  document.getElementById("logoutBtn").style.display="inline";
+  document.getElementById("noticeInput").style.display="block";
+  document.getElementById("noticeBtn").style.display="inline-block";
+
+  document.querySelectorAll(".admin-only").forEach(e=>{
+     if(e.tagName==="TD"||e.tagName==="TH"){
+        e.style.display="table-cell";
+     }else{
+        e.style.display="block";
+     }
+  });
+
+}else{
+
+  admin = false;   // AND THIS
+
+  document.getElementById("adminBadge").style.display="none";
+  document.getElementById("loginBtn").style.display="inline";
+  document.getElementById("logoutBtn").style.display="none";
+  document.getElementById("noticeInput").style.display="none";
+  document.getElementById("noticeBtn").style.display="none";
+
+  document.querySelectorAll(".admin-only").forEach(e=>{
+     e.style.display="none";
+  });
+
+}
+
+});
+
 
 const INTEREST_RATE=0.01; // 1% per month
 
@@ -171,7 +220,6 @@ const members=[
 "TAMANG KESHAR","RAI MANDIP","MAGAR MIM DARLAMI"
 ];
 
-let admin=false;
 let transactions=[];
 let editingId=null;
 let filteredTransactions = [];
@@ -186,36 +234,27 @@ memberSelect.add(o1);
 filterMember.add(o2);
 });
 
-/* ================= ADMIN ================= */
+/* ================= AUTHENCIATION ================= */
 
-function adminLogin(){
-let pin=prompt("Enter Admin PIN");
-if(pin==="6356"){
-admin=true;
-document.getElementById("noticeInput").style.display = "block";
-document.getElementById("noticeBtn").style.display = "inline-block";
-  
-document.getElementById("adminBadge").style.display="inline";
-document.getElementById("loginBtn").style.display="none";
-document.getElementById("logoutBtn").style.display="inline";
-document.querySelectorAll(".admin-only").forEach(e=>{
-   if(e.tagName === "TD" || e.tagName === "TH"){
-      e.style.display = "table-cell";
-   }else{
-      e.style.display = "block";
-   }
+function showLogin(){
+document.getElementById("loginModal").style.display="flex";
+}
+
+function login(){
+let email=document.getElementById("email").value;
+let password=document.getElementById("password").value;
+
+auth.signInWithEmailAndPassword(email,password)
+.then(()=>{
+document.getElementById("loginModal").style.display="none";
+})
+.catch(error=>{
+alert(error.message);
 });
 }
-}
 
-function adminLogout(){
-admin=false;
-document.getElementById("noticeInput").style.display = "none";
-document.getElementById("noticeBtn").style.display = "none";
-document.getElementById("adminBadge").style.display="none";
-document.getElementById("loginBtn").style.display="inline";
-document.getElementById("logoutBtn").style.display="none";
-document.querySelectorAll(".admin-only").forEach(e=>e.style.display="none");
+function logout(){
+auth.signOut();
 }
 
 /* ================= TRANSACTION ================= */
