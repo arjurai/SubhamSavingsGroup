@@ -68,7 +68,7 @@ select,input{margin:5px 0;padding:5px}
 </header>
 
 <div class="container">
-
+<div id="statusMessage" style="display:none;padding:10px;margin-bottom:10px;border-radius:6px;font-weight:bold;"></div>
 
 <!-- DASHBOARD -->
 <div class="card">
@@ -281,26 +281,25 @@ if(editingId){
     amount,
     date: firebase.firestore.Timestamp.fromDate(new Date(date))
   }).then(() => {
-      editingId = null;
-      document.getElementById("saveBtn").innerText = "Add";
-      document.getElementById("amountInput").value = "";
-      document.getElementById("dateInput").value = "";
-  });
-
+   editingId = null;
+   document.getElementById("saveBtn").innerText = "Add";
+   showStatus("Transaction Updated Successfully ✔", "green");
+   document.getElementById("amountInput").value = "";
+   document.getElementById("dateInput").value = "";
+});
 } else {
 
   db.collection("transactions").add({
-    member,
-    type,
-    amount,
-    date: firebase.firestore.Timestamp.fromDate(new Date(date))
-  });
-
-  document.getElementById("amountInput").value = "";
-  document.getElementById("dateInput").value = "";
-}
-
-}
+  member,
+  type,
+  amount,
+  date: firebase.firestore.Timestamp.fromDate(new Date(date))
+})
+.then(() => {
+   showStatus("Transaction Added Successfully ✔", "green");
+   document.getElementById("amountInput").value = "";
+   document.getElementById("dateInput").value = "";
+});
 /* ================= LOAD DATA ================= */
 
 db.collection("transactions")
@@ -416,6 +415,18 @@ document.getElementById("transactionTable").innerHTML = table;
 
 renderMembers();
 
+}
+
+function showStatus(message, color){
+  let box = document.getElementById("statusMessage");
+  box.innerText = message;
+  box.style.background = color;
+  box.style.color = "white";
+  box.style.display = "block";
+
+  setTimeout(()=>{
+    box.style.display = "none";
+  }, 2500);
 }
 
 /* ================= DELETE ================= */
