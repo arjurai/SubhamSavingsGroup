@@ -462,17 +462,69 @@ body{
   0%{left:-150%;}
   100%{left:150%;}
 }
+/* ===== Modal Overlay Blur ===== */
+
+.modal-overlay{
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
+/* ===== Animated Login Button ===== */
+
+.login-btn{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(45deg,#00c853,#009624);
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+  animation:pulse 2s infinite;
+}
+
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(0,200,83,0.6);}
+  70%{box-shadow:0 0 0 15px rgba(0,200,83,0);}
+  100%{box-shadow:0 0 0 0 rgba(0,200,83,0);}
+}
+/* ===== Financial Colors ===== */
+
+.money-green{color:#00c853;}
+.money-red{color:#d50000;}
+.money-gold{color:#ffab00;}
+.money-blue{color:#2962ff;}
+/* ===== Particle Canvas ===== */
+
+#particles{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  z-index:-1;
+}
 </style>
 </head>
 
 <body>
-  <div id="loginModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:9999;">
+  <canvas id="particles"></canvas>
+  <div id="loginModal" class="modal-overlay">
  <div class="login-box">
   <button class="close-btn" onclick="closeLogin()">✖</button>
     <h3>Admin Login</h3>
     <input type="email" id="email" placeholder="Email" style="width:100%;margin-bottom:10px;">
     <input type="password" id="password" placeholder="Password" style="width:100%;margin-bottom:10px;">
-    <button onclick="login()" style="width:100%;">Login</button>
+    <button onclick="login()" class="login-btn">Login</button>
   </div>
 </div>
 
@@ -500,10 +552,10 @@ body{
 <!-- DASHBOARD -->
 <div class="card shimmer">
 <h3>📊 Group Dashboard</h3>
-<p>Total Savings: <b id="totalSavings">0</b> KRW</p>
-<p>Total Loan Given: <b id="totalLoan">0</b> KRW</p>
-<p>Total Interest Collected: <b id="totalInterest">0</b> KRW</p>
-<p>Money Available: <b id="moneyAvailable">0</b> KRW</p>
+<p>Total Savings: <b id="totalSavings" class="money-green">0</b> KRW</p>
+<p>Total Loan Given: <b id="totalLoan" class="money-red">0</b> KRW</p>
+<p>Total Interest Collected: <b id="totalInterest" class="money-gold">0</b> KRW</p>
+<p>Money Available: <b id="moneyAvailable" class="money-blue">0</b> KRW</p>
 </div>
 
 <!-- NOTICE BOARD -->
@@ -676,7 +728,8 @@ filterMember.add(o2);
 /* ================= AUTHENCIATION ================= */
 
 function showLogin(){
-document.getElementById("loginModal").style.display="flex";
+  document.getElementById("loginModal").style.display="flex";
+  document.body.style.overflow="hidden";
 }
 
 function login(){
@@ -685,7 +738,8 @@ let password=document.getElementById("password").value;
 
 auth.signInWithEmailAndPassword(email,password)
 .then(()=>{
-document.getElementById("loginModal").style.display="none";
+  document.getElementById("loginModal").style.display="none";
+  document.body.style.overflow="auto";
 })
 .catch(error=>{
 alert(error.message);
@@ -1081,7 +1135,48 @@ function animateCounter(id, target){
 }
 function closeLogin(){
   document.getElementById("loginModal").style.display="none";
+  document.body.style.overflow="auto";
 }
+/* ===== Simple Floating Particles ===== */
+
+const canvas = document.getElementById("particles");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let particlesArray = [];
+
+for(let i=0;i<40;i++){
+  particlesArray.push({
+    x: Math.random()*canvas.width,
+    y: Math.random()*canvas.height,
+    radius: Math.random()*3+1,
+    dx: (Math.random()-0.5)*0.5,
+    dy: (Math.random()-0.5)*0.5
+  });
+}
+
+function animateParticles(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  particlesArray.forEach(p=>{
+    p.x += p.dx;
+    p.y += p.dy;
+
+    if(p.x<0 || p.x>canvas.width) p.dx*=-1;
+    if(p.y<0 || p.y>canvas.height) p.dy*=-1;
+
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.radius,0,Math.PI*2);
+    ctx.fillStyle="rgba(13,71,161,0.3)";
+    ctx.fill();
+  });
+
+  requestAnimationFrame(animateParticles);
+}
+
+animateParticles();
 </script>
 </body>
 </html>
