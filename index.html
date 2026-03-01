@@ -472,43 +472,32 @@ document.getElementById("saveBtn").innerText="Update";
 
 function renderMembers(){
 
-let container=document.getElementById("members");
-container.innerHTML="";
+let container = document.getElementById("members");
+container.innerHTML = "";
 
 members.forEach(name=>{
 
-let savings=0;
-let loan=0;
-let interestPaid=0;
-let lastLoanDate=null;
-
-transactions.forEach(t=>{
-if(t.member===name){
-if(t.type==="savings") savings+=t.amount;
-if(t.type==="loan_given"){ 
-   loan+=t.amount; 
-   lastLoanDate = (t.date && typeof t.date.toDate === "function")
-  ? t.date.toDate()
-  : new Date(t.date);
-}
-if(t.type==="loan_payment") loan-=t.amount;
-if(t.type==="interest_payment") interestPaid+=t.amount;
-}
-});
-
+let savings = 0;
+let loan = 0;
+let interestPaid = 0;
 let interestAdded = 0;
 
 transactions.forEach(t=>{
-  if(t.member===name){
-    if(t.type==="interest_added") interestAdded += t.amount;
+  if(t.member === name){
+
+    if(t.type==="savings") savings += t.amount;
+    if(t.type==="loan_given") loan += t.amount;
+    if(t.type==="loan_payment") loan -= t.amount;
     if(t.type==="interest_payment") interestPaid += t.amount;
+    if(t.type==="interest_added") interestAdded += t.amount;
+
   }
 });
 
 let interestDue = interestAdded - interestPaid;
-if(interestDue < 0) interestDue = 0;}
+if(interestDue < 0) interestDue = 0;
 
-container.innerHTML+=`
+container.innerHTML += `
 <div class="member-card">
 <h4>${name}</h4>
 <p>Savings: <span class="blue">${savings.toFixed(0)}</span></p>
