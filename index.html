@@ -491,14 +491,41 @@ if(t.type==="interest_payment") interestPaid+=t.amount;
 
 let interestDue = 0;
 
-if(loan > 0 && lastLoanDate){
+if (loan > 0 && lastLoanDate) {
 
-   let now = new Date();
-   let months = (now - lastLoanDate) / (1000 * 60 * 60 * 24 * 30);
+    let now = new Date();
 
-   interestDue = (loan * INTEREST_RATE * months) - interestPaid;
+    // Calculate total months difference
+    let yearsDiff = now.getFullYear() - lastLoanDate.getFullYear();
+    let monthsDiff = now.getMonth() - lastLoanDate.getMonth();
+    let totalMonths = yearsDiff * 12 + monthsDiff;
 
-   if(interestDue < 0) interestDue = 0;
+    let dayDiff = now.getDate() - lastLoanDate.getDate();
+
+    // First month rule: minimum 1 month
+    if (totalMonths === 0) {
+        totalMonths = 1;
+    }
+
+    // Grace rule after first month
+    if (totalMonths >= 1) {
+        if (dayDiff > 15) {
+            totalMonths += 1;
+        }
+    }
+
+    let totalInterest = 0;
+
+transactions
+  .filter(t => t.memberId === m.id)
+  .forEach(t => {
+      if (t.type === "loan_given") {
+          totalInterest += t.amount * INTEREST_RATE * totalMonths;
+      }
+  });
+    interestDue = totalInterest - interestPaid;
+
+    if (interestDue < 0) interestDue = 0;
 }
 
 container.innerHTML+=`
