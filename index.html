@@ -421,8 +421,16 @@ renderMembers();
 /* ================= DELETE ================= */
 
 function deleteTx(id){
+
 if(!admin) return;
-db.collection("transactions").doc(id).delete();
+
+if(confirm("Are you sure you want to delete this transaction?")){
+   db.collection("transactions").doc(id).delete()
+   .then(()=>{
+      showStatus("Transaction Deleted ✔", "red");
+   });
+}
+
 }
 function editTx(id){
 
