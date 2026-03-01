@@ -540,6 +540,51 @@ body{
   padding:15px;
   box-shadow:0 5px 20px rgba(0,0,0,0.1);
 }
+/* ===== Motto Animation ===== */
+
+.motto-wrapper{
+  position:relative;
+  width:100%;
+  overflow:hidden;
+  height:22px;
+}
+
+.motto{
+  position:absolute;
+  white-space:nowrap;
+  font-size:10px;
+  font-style:italic;
+  color:#1b4332;
+  animation:mottoSlide 16s linear infinite;
+}
+
+/* Animation */
+
+@keyframes mottoSlide{
+
+  0%{
+    transform:translateX(100%);
+    opacity:0;
+  }
+
+  10%{
+    opacity:1;
+  }
+
+  50%{
+    transform:translateX(0%);
+    opacity:1;
+  }
+
+  90%{
+    opacity:0.7;
+  }
+
+  100%{
+    transform:translateX(-100%);
+    opacity:0;
+  }
+}
 </style>
 </head>
 
@@ -558,6 +603,7 @@ body{
   <div class="header-left">
     <img src="icon-512.png" class="logo">
     <div class="title-box">
+    <div class="motto-wrapper">
       <p class="motto">विश्वास, अनुशासन र बचत - हाम्रो पहिचान।</p>
       <h1>Subham</h1>
       <p>Cooperative Savings</p>
