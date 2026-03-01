@@ -12,31 +12,163 @@
 body{font-family:Arial;margin:0;background:#f4f6f9}
 /* ===== GLASS HEADER ===== */
 
+/* ===== PREMIUM GLASS HEADER ===== */
+
 .glass-header{
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 90px;
+  height: 95px;
 
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  padding: 0 30px;
+  padding: 0 35px;
   box-sizing: border-box;
 
-  background: linear-gradient(135deg,#0d47a1,#1976d2);
-  border-radius: 0 0 25px 25px;
+  background: linear-gradient(135deg, rgba(13,71,161,0.85), rgba(25,118,210,0.85));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  border-radius: 0 0 30px 30px;
 
   box-shadow:
-    0 8px 25px rgba(0,0,0,0.3),
-    inset 0 0 25px rgba(255,255,255,0.2);
+    0 10px 30px rgba(0,0,0,0.4),
+    inset 0 0 25px rgba(255,255,255,0.15);
 
   color: white;
   z-index: 1000;
+  overflow: hidden;
 }
 
+/* ===== SOFT ANIMATED GLOW ===== */
+
+.glass-header::before{
+  content:"";
+  position:absolute;
+  width:200%;
+  height:200%;
+  top:-50%;
+  left:-50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 60%);
+  animation: glowMove 8s linear infinite;
+  pointer-events:none;
+}
+
+@keyframes glowMove{
+  0%{ transform: rotate(0deg); }
+  100%{ transform: rotate(360deg); }
+}
+
+/* ===== SHINE ANIMATION ===== */
+
+.glass-header::after{
+  content:"";
+  position:absolute;
+  top:0;
+  left:-100%;
+  width:50%;
+  height:100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,0.4),
+    transparent
+  );
+  animation: shine 6s infinite;
+}
+
+@keyframes shine{
+  0%{ left:-100%; }
+  60%{ left:120%; }
+  100%{ left:120%; }
+}
+
+/* ===== LOGO ===== */
+
+.logo{
+  width:70px;
+  height:70px;
+  border-radius:18px;
+  box-shadow: 0 0 20px rgba(255,255,255,0.7);
+  transition: transform 0.4s ease;
+}
+
+.logo:hover{
+  transform: scale(1.08);
+}
+
+/* ===== TITLE ===== */
+
+.title-box h1{
+  margin:0;
+  font-size:28px;
+  font-weight:bold;
+  letter-spacing:1px;
+}
+
+.title-box p{
+  margin:0;
+  font-size:16px;
+  opacity:0.9;
+}
+
+/* ===== RIGHT SIDE ===== */
+
+.header-right{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+/* ===== ADMIN BADGE ===== */
+
+.admin-badge{
+  background: linear-gradient(45deg, gold, orange);
+  color:black;
+  padding:6px 12px;
+  border-radius:10px;
+  font-weight:bold;
+  box-shadow:0 0 10px rgba(255,215,0,0.8);
+}
+
+/* ===== BUTTONS ===== */
+
+#loginBtn,
+#logoutBtn{
+  padding:8px 16px;
+  border:none;
+  border-radius:10px;
+  font-weight:bold;
+  cursor:pointer;
+  transition: all 0.3s ease;
+}
+
+/* Login */
+#loginBtn{
+  background:white;
+  color:#0d47a1;
+}
+
+#loginBtn:hover{
+  background:#e3f2fd;
+  transform: translateY(-2px);
+  box-shadow:0 6px 15px rgba(0,0,0,0.3);
+}
+
+/* Logout */
+#logoutBtn{
+  background:#ff4444;
+  color:white;
+}
+
+#logoutBtn:hover{
+  background:#cc0000;
+  transform: translateY(-2px);
+  box-shadow:0 6px 15px rgba(0,0,0,0.3);
+}
 /* Space below header */
 .header-space{
   height: 100px;
