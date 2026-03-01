@@ -461,8 +461,12 @@ let tx=transactions.find(t=>t.id===id);
 memberSelect.value=tx.member;
 document.getElementById("typeSelect").value=tx.type;
 document.getElementById("amountInput").value=tx.amount;
+let d = (tx.date && typeof tx.date.toDate === "function")
+  ? tx.date.toDate()
+  : new Date(tx.date);
+
 document.getElementById("dateInput").value =
-tx.date.toDate().toISOString().split("T")[0];
+d.toISOString().split("T")[0];
 
 editingId=id;
 document.getElementById("saveBtn").innerText="Update";
