@@ -354,12 +354,6 @@ body{
     padding:5px 8px;
   }
 }
-/* ===== Mobile Improvements ===== */
-
-@media(max-width:600px){
-   ...
-}
-
 /* ===== Premium Banking UI Polish ===== */
 
 .card{
@@ -1209,17 +1203,21 @@ function animateParticles(){
 }
 
 animateParticles();
- // ===== Savings vs Loans Chart =====
+// ===== Savings vs Loans Chart =====
 
 let financeChart;
 
 function updateChart(savings, loans){
 
-  const ctx = document.getElementById("financeChart").getContext("2d");
+  const canvas = document.getElementById("financeChart");
+  if(!canvas) return;
+
+  const ctx = canvas.getContext("2d");
 
   if(financeChart){
     financeChart.destroy();
   }
+
   financeChart = new Chart(ctx,{
     type:"bar",
     data:{
@@ -1236,17 +1234,9 @@ function updateChart(savings, loans){
     },
     options:{
       responsive:true,
-      plugins:{
-        legend:{display:false}
-      },
-      animation:{
-        duration:1500
-      },
-      scales:{
-        y:{
-          beginAtZero:true
-        }
-      }
+      plugins:{ legend:{display:false} },
+      animation:{ duration:1500 },
+      scales:{ y:{ beginAtZero:true } }
     }
   });
 }
