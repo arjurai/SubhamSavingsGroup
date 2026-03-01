@@ -1078,10 +1078,16 @@ if(loan > 0 && loanStartDate){
 container.innerHTML += `
 <div class="member-card">
 <h4>${name}</h4>
+
 <p>Savings: <span class="blue">${savings.toFixed(0)}</span></p>
 <p>Loan Due: <span class="red">${loan.toFixed(0)}</span></p>
 <p>Interest Due: <span class="red">${interestDue.toFixed(0)}</span></p>
 <p>Net Balance: <span class="green">${(savings-loan).toFixed(0)}</span></p>
+
+<button onclick="confirmStatement('${name}')" class="statement-btn">
+Download Statement
+</button>
+
 </div>`;
 });
 }
@@ -1125,34 +1131,42 @@ function exportPDF(){
 const { jsPDF } = window.jspdf;
 let doc = new jsPDF();
 
+// ===== LOGO =====
+let logo = new Image();
+logo.src = "icon-512.png";   // your logo file
+
+doc.addImage(logo, "PNG", 14, 10, 20, 20);
+
+// ===== TITLE =====
 doc.setFontSize(16);
-doc.text("Subham Cooperative Savings", 14, 15);
+doc.text("Subham Cooperative Savings", 40, 18);
 
 doc.setFontSize(12);
-doc.text("Transactions Report", 14, 23);
+doc.text("Transactions Report", 40, 26);
 
-// Filter info
-let memberFilter = document.getElementById("filterMember").value;
-let quickRange = document.getElementById("quickRange").value;
-
+// ===== FILTER INFO =====
 doc.setFontSize(10);
-doc.text("Filter: " + (memberFilter === "all" ? "All Members" : memberFilter), 14, 30);
-doc.text("Date: " + new Date().toLocaleDateString(), 150, 30);
 
-let y = 40;
+let memberFilter = document.getElementById("filterMember").value;
+doc.text("Member: " + (memberFilter === "all" ? "All Members" : memberFilter), 14, 40);
+doc.text("Generated: " + new Date().toLocaleDateString(), 140, 40);
 
-// Table Header
+let y = 50;
+
+// ===== TABLE HEADER =====
 doc.setFontSize(10);
 doc.text("Date", 14, y);
 doc.text("Member", 45, y);
 doc.text("Type", 95, y);
-doc.text("Amount (KRW)", 150, y);
+doc.text("Amount", 150, y);
 
 y += 8;
 
-let totalAmount = 0;
+let totalSavings = 0;
+let totalLoan = 0;
+let totalInterest = 0;
 
-// Transactions
+// ===== TABLE DATA =====
 filteredTransactions.forEach(t => {
 
 let dateStr = (t.date && typeof t.date.toDate === "function")
@@ -1164,7 +1178,10 @@ doc.text(t.member, 45, y);
 doc.text(t.type, 95, y);
 doc.text(Number(t.amount).toLocaleString(), 150, y);
 
-totalAmount += Number(t.amount);
+// summary calculation
+if(t.type==="savings") totalSavings += t.amount;
+if(t.type==="loan_given") totalLoan += t.amount;
+if(t.type==="interest_payment") totalInterest += t.amount;
 
 y += 8;
 
@@ -1175,12 +1192,96 @@ y = 20;
 
 });
 
-// Totals Section
+// ===== SUMMARY TOTALS =====
 y += 10;
 doc.setFontSize(12);
-doc.text("Total Transactions Amount: " + totalAmount.toLocaleString() + " KRW", 14, y);
+doc.text("Summary Totals", 14, y);
+y += 8;
+
+doc.setFontSize(10);
+doc.text("Total Savings: " + totalSavings.toLocaleString() + " KRW", 14, y);
+y += 6;
+
+doc.text("Total Loan Given: " + totalLoan.toLocaleString() + " KRW", 14, y);
+y += 6;
+
+doc.text("Total Interest Collected: " + totalInterest.toLocaleString() + " KRW", 14, y);
+y += 6;
+
+doc.text("Money Available: " + (totalSavings-totalLoan).toLocaleString() + " KRW", 14, y);
+
+// ===== PAGE NUMBERS =====
+let pageCount = doc.internal.getNumberOfPages();
+
+for(let i = 1; i <= pageCount; i++){
+  doc.setPage(i);
+  doc.setFontSize(8);
+  doc.text("Page " + i + " of " + pageCount, 170, 290);
+}
 
 doc.save("Subham_Cooperative_Report.pdf");
+}
+function exportMemberStatement(memberName){
+
+const { jsPDF } = window.jspdf;
+let doc = new jsPDF();
+
+doc.setFontSize(16);
+doc.text("Member Statement", 14, 15);
+
+doc.setFontSize(12);
+doc.text(memberName, 14, 25);
+
+let y = 35;
+
+let savings = 0;
+let loan = 0;
+let interestPaid = 0;
+
+transactions.forEach(t => {
+
+if(t.member === memberName){
+
+let dateStr = (t.date && typeof t.date.toDate === "function")
+  ? t.date.toDate().toLocaleDateString()
+  : new Date(t.date).toLocaleDateString();
+
+doc.setFontSize(10);
+doc.text(dateStr, 14, y);
+doc.text(t.type, 60, y);
+doc.text(Number(t.amount).toLocaleString(), 140, y);
+
+if(t.type==="savings") savings += t.amount;
+if(t.type==="loan_given") loan += t.amount;
+if(t.type==="loan_payment") loan -= t.amount;
+if(t.type==="interest_payment") interestPaid += t.amount;
+
+y += 8;
+
+if(y > 280){
+doc.addPage();
+y = 20;
+}
+
+}
+});
+
+// Summary
+y += 10;
+doc.setFontSize(12);
+doc.text("Summary", 14, y);
+y += 8;
+
+doc.setFontSize(10);
+doc.text("Total Savings: " + savings.toLocaleString(), 14, y);
+y += 6;
+
+doc.text("Loan Balance: " + loan.toLocaleString(), 14, y);
+y += 6;
+
+doc.text("Interest Paid: " + interestPaid.toLocaleString(), 14, y);
+
+doc.save(memberName + "_Statement.pdf");
 }
 /* ===== Animated Counter ===== */
 function animateCounter(id, target){
@@ -1286,6 +1387,13 @@ function updateChart(savings, loans){
 document.onclick = resetAutoLogout;
 document.onkeypress = resetAutoLogout;
 document.onmousemove = resetAutoLogout;
+function confirmStatement(memberName){
+
+  if(confirm("Are you sure you want to print Account Statement for " + memberName + "?")){
+    exportMemberStatement(memberName);
+  }
+
+}
 </script>
 </body>
 </html>
