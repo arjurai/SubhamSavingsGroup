@@ -593,6 +593,11 @@ body{
 
   <div class="header-right">
     <span id="adminBadge" class="admin-badge" style="display:none;">ADMIN</span>
+    <div class="header-right">
+  <button onclick="logout()">Logout</button>
+  <button onclick="generateMonthlySavings()" class="admin-btn">
+    Generate Monthly Savings
+  </button>
     <button id="loginBtn" onclick="showLogin()">Login</button>
     <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
   </div>
@@ -716,6 +721,7 @@ if(user){
   document.getElementById("adminBadge").style.display="inline";
   document.getElementById("loginBtn").style.display="none";
   document.getElementById("logoutBtn").style.display="inline";
+  document.getElementById("generateBtn").style.display="inline-block";
   document.getElementById("noticeInput").style.display="block";
   document.getElementById("noticeBtn").style.display="inline-block";
 
@@ -734,6 +740,7 @@ if(user){
   document.getElementById("adminBadge").style.display="none";
   document.getElementById("loginBtn").style.display="inline";
   document.getElementById("logoutBtn").style.display="none";
+  document.getElementById("generateBtn").style.display="none";
   document.getElementById("noticeInput").style.display="none";
   document.getElementById("noticeBtn").style.display="none";
 
@@ -1421,6 +1428,64 @@ function confirmStatement(memberName){
     exportMemberStatement(memberName);
   }
 
+}
+async function generateMonthlySavings(){
+
+  const amount = 200000;
+  const startYear = 2024;
+  const startMonth = 6; // July (0-based index)
+  const today = new Date();
+
+  let current = new Date(startYear, startMonth, 1);
+
+  while(current <= today){
+
+    let year = current.getFullYear();
+    let month = current.getMonth();
+
+    // Set collection date = 5th
+    let collectionDate = new Date(year, month, 5);
+
+    // Weekend adjustment (0=Sunday, 6=Saturday)
+    if(collectionDate.getDay() === 6){ // Saturday
+      collectionDate.setDate(collectionDate.getDate() + 2);
+    }
+
+    if(collectionDate.getDay() === 0){ // Sunday
+      collectionDate.setDate(collectionDate.getDate() + 1);
+    }
+
+    for(const name of members){
+
+      // Check duplicate for this member + month
+      let monthStart = new Date(year, month, 1);
+      let monthEnd   = new Date(year, month + 1, 1);
+
+      let snapshot = await db.collection("transactions")
+        .where("member", "==", name)
+        .where("type", "==", "savings")
+        .where("amount", "==", amount)
+        .where("date", ">=", monthStart)
+        .where("date", "<", monthEnd)
+        .get();
+
+      if(snapshot.empty){
+
+        await db.collection("transactions").add({
+          member: name,
+          type: "savings",
+          amount: amount,
+          date: collectionDate
+        });
+
+      }
+
+    }
+
+    current.setMonth(current.getMonth() + 1);
+  }
+
+  alert("Monthly savings generated successfully (No duplicates).");
 }
 </script>
 </body>
