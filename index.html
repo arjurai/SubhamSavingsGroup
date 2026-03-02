@@ -748,15 +748,7 @@ if(user){
 
   admin = true;   // THIS IS THE IMPORTANT LINE
   startAutoLogout();
-  let docId = "savings-" + year + "-" + (month+1);
-
-await db.collection("transactions").doc(docId).set({
-   member: "ALL",
-   type: "savings",
-   amount: 200000,
-   date: firebase.firestore.Timestamp.fromDate(collectionDate),
-   auto: true
-}, { merge: false });
+  smartMonthlySavingsSystem()
   document.getElementById("adminBadge").style.display="inline";
   document.getElementById("loginBtn").style.display="none";
   document.getElementById("logoutBtn").style.display="inline";
@@ -1632,28 +1624,27 @@ async function smartMonthlySavingsSystem(){
     // Only process if collection date has passed
     if(collectionDate <= today){
 
-      const snapshot = await db.collection("transactions")
-        .where("type","==","savings")
-        .where("date","==",collectionDate.toISOString())
-        .get();
+      console.log("Checking savings for:", collectionDate);
 
-      if(snapshot.empty){
+for(const name of members){
 
-        console.log("Generating savings for:", collectionDate);
+  let docId =
+    "savings-" +
+    name + "-" +
+    collectionDate.getFullYear() + "-" +
+    (collectionDate.getMonth()+1);
 
-        for(const name of members){
-          await db.collection("transactions").add({
-            type: "savings",
-            member: name,
-            amount: 200000,
-            date: collectionDate.toISOString(),
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        }
-
-      }
-
-    }
+  await db.collection("transactions")
+    .doc(docId)
+    .set({
+      type: "savings",
+      member: name,
+      amount: 200000,
+      date: collectionDate.toISOString(),
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      auto: true
+    }, { merge: false }); // prevents overwrite
+}
 
     current.setMonth(current.getMonth() + 1);
   }
