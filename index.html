@@ -642,6 +642,7 @@ body {
 <p>Total Savings: <b id="totalSavings" class="money-green">0</b> KRW</p>
 <p>Total Loan Given: <b id="totalLoan" class="money-red">0</b> KRW</p>
 <p>Total Interest Collected: <b id="totalInterest" class="money-gold">0</b> KRW</p>
+<p>Grand Total: <b id="grandTotal" class="money-gold">0</b> KRW</p>
 <p>Money Available: <b id="moneyAvailable" class="money-blue">0</b> KRW</p>
 </div>
 <div class="chart-container">
@@ -935,7 +936,11 @@ transactions.forEach(t=>{
 animateCounter("totalSavings", totalSavings);
 animateCounter("totalLoan", totalLoan);
 animateCounter("totalInterest", totalInterest);
-animateCounter("moneyAvailable", totalSavings - totalLoan);
+let grandTotal = totalSavings + totalInterest;
+let moneyAvailable = grandTotal - totalLoan;
+
+animateCounter("grandTotal", grandTotal);
+animateCounter("moneyAvailable", moneyAvailable);
 updateChart(totalSavings, totalLoan);
 
 /* ================= STEP 3 — APPLY FILTER FOR TABLE ONLY ================= */
@@ -1078,6 +1083,17 @@ function renderMembers(){
 
 let container = document.getElementById("members");
 container.innerHTML = "";
+// Calculate Grand Total for Share
+let totalSavingsAll = 0;
+let totalInterestAll = 0;
+
+transactions.forEach(t=>{
+  if(t.type==="savings") totalSavingsAll += t.amount;
+  if(t.type==="interest_payment") totalInterestAll += t.amount;
+});
+
+let grandTotalAll = totalSavingsAll + totalInterestAll;
+let sharePerPerson = grandTotalAll / members.length;
 
 members.forEach(name=>{
 
@@ -1154,7 +1170,7 @@ container.innerHTML += `
 <p>Savings: <span class="blue">${savings.toFixed(0)}</span></p>
 <p>Loan Due: <span class="red">${loan.toFixed(0)}</span></p>
 <p>Interest Due: <span class="red">${interestDue.toFixed(0)}</span></p>
-<p>Net Balance: <span class="green">${(savings-loan).toFixed(0)}</span></p>
+<p>Share Per Person: <span class="green">${sharePerPerson.toFixed(0)}</span></p>
 <button onclick="confirmStatement('${name}')" class="statement-btn">
 Download Statement
 </button>
