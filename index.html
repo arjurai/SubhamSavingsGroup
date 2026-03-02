@@ -621,7 +621,7 @@ body {
             style="display:none;background:#00c853;color:white;">Savings</button>
 
     <button id="loginBtn" onclick="showLogin()">
-        Admin Login
+        Login
     </button>
 
     <button id="logoutBtn"
@@ -637,11 +637,11 @@ body {
 <!-- DASHBOARD -->
 <div class="card shimmer">
 <h3>📊 Group Dashboard</h3>
-<p>Grand Total (सम्पूर्ण पुंजी): <b id="grandTotal" class="money-gold">0</b> KRW</p>
-<p>Total Savings (कुल बचत): <b id="totalSavings" class="money-green">0</b> KRW</p>
-<p>Total Loan Given (कुल लगानी): <b id="totalLoan" class="money-red">0</b> KRW</p>
-<p>Total Interest Collected (कुल ब्याज आम्दानी): <b id="totalInterest" class="money-gold">0</b> KRW</p>
-<p>Money Available (उपलब्ध रकम): <b id="moneyAvailable" class="money-blue">0</b> KRW</p>
+<p>Grand Total(सम्पूर्ण पुंजी): <b id="grandTotal" class="money-gold">0</b> KRW</p>
+<p>Total Savings कुल बचत: <b id="totalSavings" class="money-green">0</b> KRW</p>
+<p>Total Loan Given: <b id="totalLoan" class="money-red">0</b> KRW</p>
+<p>Total Interest Collected: <b id="totalInterest" class="money-gold">0</b> KRW</p>
+<p>Money Available: <b id="moneyAvailable" class="money-blue">0</b> KRW</p>
 </div>
 <div class="chart-container">
    <canvas id="financeChart"></canvas>
@@ -748,7 +748,6 @@ if(user){
 
   admin = true;   // THIS IS THE IMPORTANT LINE
   startAutoLogout();
-  smartMonthlySavingsSystem()
   document.getElementById("adminBadge").style.display="inline";
   document.getElementById("loginBtn").style.display="none";
   document.getElementById("logoutBtn").style.display="inline";
@@ -916,6 +915,7 @@ if(editingId){
 /* ================= RENDER ================= */
 
 function render(){
+autoMonthlySavingsCheck();
 
 /* ================= STEP 1 — CALCULATE DASHBOARD TOTALS ================= */
 
@@ -1104,12 +1104,8 @@ let accumulatedInterest = 0;
 let memberTransactions = transactions
   .filter(t => t.member === name)
   .sort((a,b)=>{
-   let d1 = (a.date && typeof a.date.toDate === "function")
-  ? a.date.toDate()
-  : new Date(a.date);
-    let d2 = (b.date && typeof b.date.toDate === "function")
-  ? b.date.toDate()
-  : new Date(b.date);
+    let d1 = (a.date.toDate) ? a.date.toDate() : new Date(a.date);
+    let d2 = (b.date.toDate) ? b.date.toDate() : new Date(b.date);
     return d1 - d2;
   });
 
@@ -1599,61 +1595,56 @@ document.addEventListener("touchend", function(){
   pullIndicator.style.top = "-60px";
   pullDistance = 0;
 });
-async function smartMonthlySavingsSystem(){
-  if(!admin) return;
+async function autoMonthlySavingsCheck(){
+
   let today = new Date();
   today.setHours(0,0,0,0);
 
-  let start = new Date(2024, 6, 1); // July 2024 start
-  let current = new Date(start);
+  let year = today.getFullYear();
+  let month = today.getMonth();
 
-  while(current <= today){
+  // Base date = 5th
+  let collectionDate = new Date(year, month, 5);
 
-    let year = current.getFullYear();
-    let month = current.getMonth();
+  // Weekend adjustment
+  if(collectionDate.getDay() === 6){ // Saturday
+    collectionDate.setDate(collectionDate.getDate() + 2);
+  }
 
-    let collectionDate = new Date(year, month, 5);
+  if(collectionDate.getDay() === 0){ // Sunday
+    collectionDate.setDate(collectionDate.getDate() + 1);
+  }
 
-    // Weekend adjustment
-    if(collectionDate.getDay() === 6){
-      collectionDate.setDate(collectionDate.getDate() + 2);
-    }
+  collectionDate.setHours(0,0,0,0);
 
-    if(collectionDate.getDay() === 0){
-      collectionDate.setDate(collectionDate.getDate() + 1);
-    }
+  // Only run if today is collection date
+  if(today.getTime() !== collectionDate.getTime()){
+    return;
+  }
 
-    collectionDate.setHours(0,0,0,0);
+  // Check duplicate (if already generated)
+  const snapshot = await db.collection("transactions")
+    .where("type","==","savings")
+    .where("date","==",collectionDate.toISOString())
+    .get();
 
-    // Only process if collection date has passed
-    if(collectionDate <= today){
+  if(!snapshot.empty){
+    console.log("Savings already generated for this month");
+    return;
+  }
 
-      console.log("Checking savings for:", collectionDate);
-
-for(const name of members){
-
-  let docId =
-    "savings-" +
-    name + "-" +
-    collectionDate.getFullYear() + "-" +
-    (collectionDate.getMonth()+1);
-
-  await db.collection("transactions")
-    .doc(docId)
-    .set({
+  // Generate savings for each member
+  for(const name of members){
+    await db.collection("transactions").add({
       type: "savings",
       member: name,
       amount: 200000,
-     date: firebase.firestore.Timestamp.fromDate(collectionDate),
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      auto: true
-    }, { merge: false }); // prevents overwrite
-}
-
-    current.setMonth(current.getMonth() + 1);
+      date: collectionDate.toISOString(),
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
   }
 
-  console.log("Smart monthly system check completed");}
+  console.log("Monthly savings auto-generated successfully");
 }
 </script>
 </body>
