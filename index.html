@@ -748,6 +748,7 @@ if(user){
 
   admin = true;   // THIS IS THE IMPORTANT LINE
   startAutoLogout();
+  smartMonthlySavingsSystem();
   document.getElementById("adminBadge").style.display="inline";
   document.getElementById("loginBtn").style.display="none";
   document.getElementById("logoutBtn").style.display="inline";
@@ -915,7 +916,6 @@ if(editingId){
 /* ================= RENDER ================= */
 
 function render(){
-smartMonthlySavingsSystem();
 
 /* ================= STEP 1 — CALCULATE DASHBOARD TOTALS ================= */
 
@@ -1596,7 +1596,7 @@ document.addEventListener("touchend", function(){
   pullDistance = 0;
 });
 async function smartMonthlySavingsSystem(){
-
+  if(!admin) return;
   let today = new Date();
   today.setHours(0,0,0,0);
 
