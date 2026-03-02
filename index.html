@@ -1442,9 +1442,14 @@ function confirmStatement(memberName){
 }
 async function generateMonthlySavings(){
 
+  if(!admin){
+    alert("Only Admin Allowed");
+    return;
+  }
+
   const amount = 200000;
   const startYear = 2024;
-  const startMonth = 6; // July (0-based index)
+  const startMonth = 6; // July
   const today = new Date();
 
   let current = new Date(startYear, startMonth, 1);
@@ -1454,28 +1459,26 @@ async function generateMonthlySavings(){
     let year = current.getFullYear();
     let month = current.getMonth();
 
-    // Set collection date = 5th
     let collectionDate = new Date(year, month, 5);
 
-    // Weekend adjustment (0=Sunday, 6=Saturday)
-    if(collectionDate.getDay() === 6){ // Saturday
+    // Weekend adjustment
+    if(collectionDate.getDay() === 6){
       collectionDate.setDate(collectionDate.getDate() + 2);
     }
 
-    if(collectionDate.getDay() === 0){ // Sunday
+    if(collectionDate.getDay() === 0){
       collectionDate.setDate(collectionDate.getDate() + 1);
     }
 
     for(const name of members){
 
-      // Check duplicate for this member + month
       let monthStart = firebase.firestore.Timestamp.fromDate(
-  new Date(year, month, 1)
-);
+        new Date(year, month, 1)
+      );
 
-let monthEnd = firebase.firestore.Timestamp.fromDate(
-  new Date(year, month + 1, 1)
-);
+      let monthEnd = firebase.firestore.Timestamp.fromDate(
+        new Date(year, month + 1, 1)
+      );
 
       let snapshot = await db.collection("transactions")
         .where("member", "==", name)
@@ -1491,7 +1494,7 @@ let monthEnd = firebase.firestore.Timestamp.fromDate(
           member: name,
           type: "savings",
           amount: amount,
-          date: collectionDate
+          date: firebase.firestore.Timestamp.fromDate(collectionDate)
         });
 
       }
