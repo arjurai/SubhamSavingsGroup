@@ -1511,6 +1511,11 @@ async function generateMonthlySavings(){
     if(collectionDate.getDay() === 0){
       collectionDate.setDate(collectionDate.getDate() + 1);
     }
+    // 🔴 STOP if collection date is in future
+if(collectionDate > today){
+  current.setMonth(current.getMonth() + 1);
+  continue;
+}
 
     for(const name of members){
 
