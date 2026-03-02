@@ -1064,7 +1064,7 @@ members.forEach(name=>{
 let savings = 0;
 let loan = 0;
 let interestPaid = 0;
-let loanStartDate = null;
+let accumulatedInterest = 0;
 
 let memberTransactions = transactions
   .filter(t => t.member === name)
@@ -1074,9 +1074,22 @@ let memberTransactions = transactions
     return d1 - d2;
   });
 
+let lastDate = null;
+
 memberTransactions.forEach(t=>{
 
   let txDate = (t.date.toDate) ? t.date.toDate() : new Date(t.date);
+
+  // Calculate interest from lastDate to this transaction date
+  if(lastDate && loan > 0){
+    let months =
+      (txDate.getFullYear() - lastDate.getFullYear()) * 12 +
+      (txDate.getMonth() - lastDate.getMonth());
+
+    if(months > 0){
+      accumulatedInterest += loan * INTEREST_RATE * months;
+    }
+  }
 
   if(t.type==="savings"){
     savings += t.amount;
@@ -1084,44 +1097,36 @@ memberTransactions.forEach(t=>{
 
   if(t.type==="loan_given"){
     loan += t.amount;
-    loanStartDate = txDate; // reset start date on new loan
   }
 
   if(t.type==="loan_payment"){
     loan -= t.amount;
-
-    if(loan <= 0){
-      loan = 0;
-      loanStartDate = null;
-    } else {
-      loanStartDate = txDate; // reset start date after payment
-    }
+    if(loan < 0) loan = 0;
   }
 
   if(t.type==="interest_payment"){
     interestPaid += t.amount;
   }
 
+  lastDate = txDate;
 });
 
-let interestDue = 0;
-
-if(loan > 0 && loanStartDate){
+// Calculate interest from last transaction until today
+if(loan > 0 && lastDate){
 
   let today = new Date();
 
   let months =
-    (today.getFullYear() - loanStartDate.getFullYear()) * 12 +
-    (today.getMonth() - loanStartDate.getMonth());
+    (today.getFullYear() - lastDate.getFullYear()) * 12 +
+    (today.getMonth() - lastDate.getMonth());
 
-  if(months < 0) months = 0;
-
-  let totalInterest = loan * INTEREST_RATE * months;
-
-  interestDue = totalInterest - interestPaid;
-
-  if(interestDue < 0) interestDue = 0;
+  if(months > 0){
+    accumulatedInterest += loan * INTEREST_RATE * months;
+  }
 }
+
+let interestDue = accumulatedInterest - interestPaid;
+if(interestDue < 0) interestDue = 0;
 
 container.innerHTML += `
 <div class="member-card">
