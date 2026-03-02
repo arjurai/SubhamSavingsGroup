@@ -915,6 +915,7 @@ if(editingId){
 /* ================= RENDER ================= */
 
 function render(){
+autoMonthlySavingsCheck();
 
 /* ================= STEP 1 — CALCULATE DASHBOARD TOTALS ================= */
 
@@ -1594,6 +1595,57 @@ document.addEventListener("touchend", function(){
   pullIndicator.style.top = "-60px";
   pullDistance = 0;
 });
+async function autoMonthlySavingsCheck(){
+
+  let today = new Date();
+  today.setHours(0,0,0,0);
+
+  let year = today.getFullYear();
+  let month = today.getMonth();
+
+  // Base date = 5th
+  let collectionDate = new Date(year, month, 5);
+
+  // Weekend adjustment
+  if(collectionDate.getDay() === 6){ // Saturday
+    collectionDate.setDate(collectionDate.getDate() + 2);
+  }
+
+  if(collectionDate.getDay() === 0){ // Sunday
+    collectionDate.setDate(collectionDate.getDate() + 1);
+  }
+
+  collectionDate.setHours(0,0,0,0);
+
+  // Only run if today is collection date
+  if(today.getTime() !== collectionDate.getTime()){
+    return;
+  }
+
+  // Check duplicate (if already generated)
+  const snapshot = await db.collection("transactions")
+    .where("type","==","savings")
+    .where("date","==",collectionDate.toISOString())
+    .get();
+
+  if(!snapshot.empty){
+    console.log("Savings already generated for this month");
+    return;
+  }
+
+  // Generate savings for each member
+  for(const name of members){
+    await db.collection("transactions").add({
+      type: "savings",
+      member: name,
+      amount: 200000,
+      date: collectionDate.toISOString(),
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+
+  console.log("Monthly savings auto-generated successfully");
+}
 </script>
 </body>
 </html>
