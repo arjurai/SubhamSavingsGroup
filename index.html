@@ -748,7 +748,15 @@ if(user){
 
   admin = true;   // THIS IS THE IMPORTANT LINE
   startAutoLogout();
-  smartMonthlySavingsSystem();
+  let docId = "savings-" + year + "-" + (month+1);
+
+await db.collection("transactions").doc(docId).set({
+   member: "ALL",
+   type: "savings",
+   amount: 200000,
+   date: firebase.firestore.Timestamp.fromDate(collectionDate),
+   auto: true
+}, { merge: false });
   document.getElementById("adminBadge").style.display="inline";
   document.getElementById("loginBtn").style.display="none";
   document.getElementById("logoutBtn").style.display="inline";
