@@ -592,15 +592,26 @@ body{
   </div>
 
   <div class="header-right">
-    <span id="adminBadge" class="admin-badge" style="display:none;">ADMIN</span>
-    <div class="header-right">
-  <button onclick="logout()">Logout</button>
-  <button onclick="generateMonthlySavings()" class="admin-btn">
-    Generate Monthly Savings
-  </button>
-    <button id="loginBtn" onclick="showLogin()">Login</button>
-    <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
-  </div>
+    <span id="adminBadge" class="admin-badge" style="display:none;">
+        ADMIN
+    </span>
+
+    <button id="generateBtn"
+            onclick="generateMonthlySavings()"
+            style="display:none;background:#00c853;color:white;">
+        Generate Monthly Savings
+    </button>
+
+    <button id="loginBtn" onclick="showLogin()">
+        Login
+    </button>
+
+    <button id="logoutBtn"
+            onclick="logout()"
+            style="display:none;">
+        Logout
+    </button>
+</div>
 </header>
 <div class="container">
 <div id="statusMessage"></div>
