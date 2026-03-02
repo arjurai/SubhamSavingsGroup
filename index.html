@@ -1649,19 +1649,6 @@ async function autoMonthlySavingsCheck(){
 
   console.log("Monthly savings auto-generated successfully");
 }
-
-  // Generate savings for each member
-  for(const name of members){
-    await db.collection("transactions").add({
-      type: "savings",
-      member: name,
-      amount: 200000,
-      date: firebase.firestore.Timestamp.fromDate(collectionDate)
-    });
-  }
-
-  console.log("Monthly savings auto-generated successfully");
-}
 }
 </script>
 </body>
