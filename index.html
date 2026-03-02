@@ -1066,37 +1066,40 @@ let loan = 0;
 let interestPaid = 0;
 let loanStartDate = null;
 
-transactions.forEach(t=>{
+let memberTransactions = transactions
+  .filter(t => t.member === name)
+  .sort((a,b)=>{
+    let d1 = (a.date.toDate) ? a.date.toDate() : new Date(a.date);
+    let d2 = (b.date.toDate) ? b.date.toDate() : new Date(b.date);
+    return d1 - d2;
+  });
 
-  if(t.member === name){
+memberTransactions.forEach(t=>{
 
-    if(t.type==="savings") savings += t.amount;
+  let txDate = (t.date.toDate) ? t.date.toDate() : new Date(t.date);
 
-    if(t.type==="loan_given"){
-      loan += t.amount;
+  if(t.type==="savings"){
+    savings += t.amount;
+  }
 
-      let d = (t.date && typeof t.date.toDate==="function")
-        ? t.date.toDate()
-        : new Date(t.date);
+  if(t.type==="loan_given"){
+    loan += t.amount;
+    loanStartDate = txDate; // reset start date on new loan
+  }
 
-      if(!loanStartDate || d < loanStartDate){
-        loanStartDate = d;
-      }
+  if(t.type==="loan_payment"){
+    loan -= t.amount;
+
+    if(loan <= 0){
+      loan = 0;
+      loanStartDate = null;
+    } else {
+      loanStartDate = txDate; // reset start date after payment
     }
+  }
 
-    if(t.type==="loan_payment"){
-      loan -= t.amount;
-
-      if(loan <= 0){
-        loan = 0;
-        loanStartDate = null;
-      }
-    }
-
-    if(t.type==="interest_payment"){
-      interestPaid += t.amount;
-    }
-
+  if(t.type==="interest_payment"){
+    interestPaid += t.amount;
   }
 
 });
@@ -1118,22 +1121,18 @@ if(loan > 0 && loanStartDate){
   interestDue = totalInterest - interestPaid;
 
   if(interestDue < 0) interestDue = 0;
-
 }
 
 container.innerHTML += `
 <div class="member-card">
 <h4>${name}</h4>
-
 <p>Savings: <span class="blue">${savings.toFixed(0)}</span></p>
 <p>Loan Due: <span class="red">${loan.toFixed(0)}</span></p>
 <p>Interest Due: <span class="red">${interestDue.toFixed(0)}</span></p>
 <p>Net Balance: <span class="green">${(savings-loan).toFixed(0)}</span></p>
-
 <button onclick="confirmStatement('${name}')" class="statement-btn">
 Download Statement
 </button>
-
 </div>`;
 });
 }
