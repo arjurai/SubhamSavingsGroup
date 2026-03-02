@@ -1104,8 +1104,12 @@ let accumulatedInterest = 0;
 let memberTransactions = transactions
   .filter(t => t.member === name)
   .sort((a,b)=>{
-    let d1 = (a.date.toDate) ? a.date.toDate() : new Date(a.date);
-    let d2 = (b.date.toDate) ? b.date.toDate() : new Date(b.date);
+   let d1 = (a.date && typeof a.date.toDate === "function")
+  ? a.date.toDate()
+  : new Date(a.date);
+    let d2 = (b.date && typeof b.date.toDate === "function")
+  ? b.date.toDate()
+  : new Date(b.date);
     return d1 - d2;
   });
 
@@ -1640,7 +1644,7 @@ for(const name of members){
       type: "savings",
       member: name,
       amount: 200000,
-      date: collectionDate.toISOString(),
+     date: firebase.firestore.Timestamp.fromDate(collectionDate),
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       auto: true
     }, { merge: false }); // prevents overwrite
