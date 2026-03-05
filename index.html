@@ -1227,6 +1227,12 @@ logo.src = "icon-512.png";   // your logo file
 
 doc.addImage(logo, "PNG", 14, 10, 20, 20);
 
+const stamp = new Image();
+stamp.src = "stamp.png";
+
+stamp.onload = function(){
+  pdf.addImage(stamp, "PNG", 140, 230, 50, 50);
+};
 // ===== TITLE =====
 doc.setFontSize(16);
 doc.text("Subham Cooperative Savings", 40, 18);
