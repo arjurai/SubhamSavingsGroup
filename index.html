@@ -9,8 +9,6 @@
 <meta name="theme-color" content="#0d47a1">
 
 <style>
-body{font-family:Arial;margin:0;background:#f4f6f9}
-/* ===== GLASS HEADER ===== */
 
 /* ===== PREMIUM GLASS HEADER ===== */
 
@@ -307,14 +305,6 @@ text-align:center;
   box-shadow:0 10px 25px rgba(0,0,0,0.2);
   z-index: 1;
 }
-/* ===== Floating Animated Background ===== */
-
-body{
-  background: linear-gradient(-45deg, #e3f2fd, #bbdefb, #e1f5fe, #f0f8ff);
-  background-size: 400% 400%;
-  animation: gradientMove 15s ease infinite;
-}
-
 @keyframes gradientMove{
   0%{ background-position: 0% 50%; }
   50%{ background-position: 100% 50%; }
@@ -420,10 +410,12 @@ button:hover{
   to{opacity:1;transform:scale(1);}
 }
 /* ===== Page Fade In ===== */
-
 body{
-  opacity:0;
-  animation:fadePage 0.8s ease forwards;
+  font-family:Arial;
+  margin:0;
+  background: linear-gradient(-45deg, #e3f2fd, #bbdefb, #e1f5fe, #f0f8ff);
+  background-size:400% 400%;
+  animation:gradientMove 15s ease infinite, fadePage 0.8s ease forwards;
 }
 
 @keyframes fadePage{
@@ -545,17 +537,16 @@ body{
 
   animation: slideMotto 18s linear infinite;
 }
-  /* ===== Chart Styling ===== */
+ /* ===== Chart Styling ===== */
 
 .chart-container{
   width:95%;
   max-width:500px;
   margin:20px auto;
-  background:rgba(255,255,255,0.7);
-  backdrop-filter:blur(10px);
-  border-radius:15px;
+  background:rgba(255,255,255,0.9);
   padding:15px;
-  box-shadow:0 5px 20px rgba(0,0,0,0.1);
+  border-radius:12px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.2);
 }
 .container{
   padding:15px;
